@@ -12,24 +12,26 @@
 # fine-tuning enabling code and other elements of the foregoing made publicly available
 # by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
 
-from textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
-
 try:
-    from utils.torchvision_fix import apply_fix
-
-    apply_fix()
+    from hy3dpaint.bootstrap import apply_torchvision_compatibility_fix
+    from hy3dpaint.textureGenPipeline import (
+        Hunyuan3DPaintConfig,
+        Hunyuan3DPaintPipeline,
+    )
 except ImportError:
-    print("Warning: torchvision_fix module not found, proceeding without compatibility fix")
-except Exception as e:
-    print(f"Warning: Failed to apply torchvision fix: {e}")
+    from bootstrap import apply_torchvision_compatibility_fix
+    from textureGenPipeline import Hunyuan3DPaintConfig, Hunyuan3DPaintPipeline
+
+apply_torchvision_compatibility_fix()
 
 
 if __name__ == "__main__":
-
     max_num_view = 6  # can be 6 to 9
     resolution = 512  # can be 768 or 512
 
     conf = Hunyuan3DPaintConfig(max_num_view, resolution)
     paint_pipeline = Hunyuan3DPaintPipeline(conf)
-    output_mesh_path = paint_pipeline(mesh_path="./assets/case_1/mesh.glb", image_path="./assets/case_1/image.png")
+    output_mesh_path = paint_pipeline(
+        mesh_path="./assets/case_1/mesh.glb", image_path="./assets/case_1/image.png"
+    )
     print(f"Output mesh path: {output_mesh_path}")

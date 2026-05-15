@@ -1,0 +1,19 @@
+include LICENSE
+include README.md
+include requirements.txt
+include packages.txt
+prune .history
+prune hy3dpaint/.mypy_cache
+prune hy3dpaint/hunyuanpaintpbr/.mypy_cache
+prune hy3dshape/.mypy_cache
+global-exclude __pycache__
+global-exclude *.py[cod]
+recursive-include assets *
+recursive-include hy3dpaint/assets *
+recursive-include hy3dpaint/cfgs *
+recursive-include hy3dpaint/ckpt *
+recursive-include hy3dpaint/DifferentiableRenderer *
+recursive-include hy3dpaint/hunyuanpaintpbr *.py
+recursive-include hy3dpaint/packages/custom_rasterizer *
+recursive-include hy3dshape/configs *
+recursive-include hy3dshape/tools *

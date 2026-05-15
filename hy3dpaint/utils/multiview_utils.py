@@ -34,12 +34,30 @@ class multiviewDiffusionNet:
         self.cfg = cfg
         self.mode = self.cfg.model.params.stable_diffusion_config.custom_pipeline[2:]
 
-        model_path = huggingface_hub.snapshot_download(
-            repo_id=config.multiview_pretrained_path,
-            allow_patterns=["hunyuan3d-paintpbr-v2-1/*"],
-        )
+        model_source = config.multiview_pretrained_path
+        if os.path.isdir(model_source):
+            direct_candidates = [
+                model_source,
+                os.path.join(model_source, "hunyuan3d-paintpbr-v2-1"),
+            ]
+            model_path = next((path for path in direct_candidates if os.path.isdir(path)), None)
+            if model_path is None:
+                raise FileNotFoundError(
+                    f"Texture model path '{model_source}' does not contain hunyuan3d-paintpbr-v2-1"
+                )
+        else:
+            try:
+                model_path = huggingface_hub.snapshot_download(
+                    repo_id=model_source,
+                    allow_patterns=["hunyuan3d-paintpbr-v2-1/*"],
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to load texture model repo '{model_source}'. "
+                    "Set HY3D_TEXGEN_MODEL_PATH to a local path or alternate repo."
+                ) from exc
 
-        model_path = os.path.join(model_path, "hunyuan3d-paintpbr-v2-1")
+            model_path = os.path.join(model_path, "hunyuan3d-paintpbr-v2-1")
         pipeline = DiffusionPipeline.from_pretrained(
             model_path,
             custom_pipeline=custom_pipeline, 
@@ -53,7 +71,7 @@ class multiviewDiffusionNet:
         self.pipeline = pipeline.to(self.device)
 
         if hasattr(self.pipeline.unet, "use_dino") and self.pipeline.unet.use_dino:
-            from hunyuanpaintpbr.unet.modules import Dino_v2
+            from hy3dpaint.hunyuanpaintpbr.unet.modules import Dino_v2
             self.dino_v2 = Dino_v2(config.dino_ckpt_path).to(torch.float16)
             self.dino_v2 = self.dino_v2.to(self.device)
 

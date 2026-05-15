@@ -9,7 +9,7 @@ model:
     noise_in_channels: 12
 
     stable_diffusion_config:
-      pretrained_model_name_or_path: stabilityai/stable-diffusion-2-1
+      pretrained_model_name_or_path: stabilityai/stable-diffusion-2-1-base
       custom_pipeline: ./hunyuanpaintpbr
       
 

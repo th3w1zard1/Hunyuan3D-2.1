@@ -4,9 +4,20 @@ emoji: 👻
 colorFrom: red
 colorTo: green
 sdk: gradio
-sdk_version: 4.44.0
+sdk_version: 5.33.0
+python_version: 3.10.13
+suggested_hardware: l40sx1
+startup_duration_timeout: 1h
+models:
+  - tencent/Hunyuan3D-2.1
+  - facebook/dinov2-giant
+  - stabilityai/stable-diffusion-2-1-base
 
 app_file: gradio_app.py
+preload_from_hub:
+  - tencent/Hunyuan3D-2.1
+  - facebook/dinov2-giant
+  - stabilityai/stable-diffusion-2-1-base
 pinned: false
 short_description: Image-to-3D Generation
 ---
@@ -15,7 +26,6 @@ short_description: Image-to-3D Generation
 <p align="center">
   <img src="assets/images/teaser.jpg">
 </p>
-
 
 <div align="center">
   <a href=https://3d.hunyuan.tencent.com target="_blank"><img src=https://img.shields.io/badge/Official%20Site-333399.svg?logo=homepage height=22px></a>
@@ -44,9 +54,7 @@ short_description: Image-to-3D Generation
 
 | Wechat Group                                     | Xiaohongshu                                           | X                                           | Discord                                           |
 |--------------------------------------------------|-------------------------------------------------------|---------------------------------------------|---------------------------------------------------|
-| <img src="assets/qrcode/wechat.png"  height=140> | <img src="assets/qrcode/xiaohongshu.png"  height=140> | <img src="assets/qrcode/x.png"  height=140> | <img src="assets/qrcode/discord.png"  height=140> |        
-
-
+| <img src="assets/qrcode/wechat.png"  height=140> | <img src="assets/qrcode/xiaohongshu.png"  height=140> | <img src="assets/qrcode/x.png"  height=140> | <img src="assets/qrcode/discord.png"  height=140> |
 
 ## ☯️ **Hunyuan3D 2.1**
 
@@ -74,7 +82,6 @@ and the condition following ability.
 | Direct3D-S2 | 0.0706     | 0.1134      | 0.2346     | 0.2930         |
 | Hunyuan3D-Shape-2.1           | **0.0774** | **0.1395**  | **0.2556** | **0.3213** |
 
-
 | Model                   | CLIP-FiD(⬇)   | CMMD(⬇) | CLIP-I(⬆)      | LPIPS(⬇) |
 |-------------------------|-----------|-------------|-------------|---------------|
 | SyncMVD-IPA  | 28.39     | 2.397      | 0.8823     | 0.1423         |
@@ -82,36 +89,47 @@ and the condition following ability.
 | Hunyuan3D-2.0 | 26.44     | 2.318     | 0.8893     | 0.1261         |
 | Hunyuan3D-Paint-2.1           | **24.78** | **2.191**  | **0.9207** | **0.1211**     |
 
-
-
 ## 🎁 Models Zoo
 
 It takes 10 GB VRAM for shape generation, 21GB for texture generation and 29GB for shape and texture generation in total.
 
-
 | Model                      | Description                 | Date       | Size | Huggingface                                                                               |
-|----------------------------|-----------------------------|------------|------|-------------------------------------------------------------------------------------------| 
+|----------------------------|-----------------------------|------------|------|-------------------------------------------------------------------------------------------|
 | Hunyuan3D-Shape-v2-1         | Image to Shape Model        | 2025-06-14 | 3.3B | [Download](https://huggingface.co/tencent/Hunyuan3D-2.1/tree/main/hunyuan3d-dit-v2-1)         |
 | Hunyuan3D-Paint-v2-1       | Texture Generation Model    | 2025-06-14 | 2B | [Download](https://huggingface.co/tencent/Hunyuan3D-2.1/tree/main/hunyuan3d-paint-v2-1)       |
-
 
 ## 🤗 Get Started with Hunyuan3D 2.1
 
 Hunyuan3D 2.1 supports Macos, Windows, Linux. You may follow the next steps to use Hunyuan3D 2.1 via:
 
 ### Install Requirements
+
 We test our model on an A100 GPU with Python 3.10 and PyTorch 2.5.1+cu124.
+
+```bash
+# Recommended editable install for local development
+pip install -e .[torch,build]
+python scripts/bootstrap_runtime.py
+
+# Space-compatible install path that matches the checked-in requirements layering
+pip install -r requirements.txt
+python scripts/bootstrap_runtime.py
+```
+
+If you need the exact CUDA 12.4 torch wheels used for the official environment, install the torch stack first and then run the editable install:
+
 ```bash
 pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-pip install -r requirements.txt
-
-cd hy3dpaint/custom_rasterizer
-pip install -e .
-cd ../..
-cd hy3dpaint/DifferentiableRenderer
-bash compile_mesh_painter.sh
-cd ../..
+pip install -e .[build]
+python scripts/bootstrap_runtime.py
 ```
+
+The runtime bootstrap step replaces the old manual compile flow. It installs the custom rasterizer from the bundled wheel when present, falls back to building it from source when the wheel is absent, and compiles the mesh painter helper automatically.
+
+Additional operator and deployment documentation:
+
+- [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
+- [docs/SPACE_DEPLOYMENT.md](docs/SPACE_DEPLOYMENT.md)
 
 ### Code Usage
 
@@ -133,11 +151,9 @@ paint_pipeline = Hunyuan3DPaintPipeline(Hunyuan3DPaintConfig(max_num_view=6, res
 mesh_textured = paint_pipeline(mesh_path, image_path='assets/demo.png')
 ```
 
-
 ### Gradio App
 
 You could also host a [Gradio](https://www.gradio.app/) App in your own computer via:
-
 
 ```bash
 python3 gradio_app.py \
@@ -146,7 +162,6 @@ python3 gradio_app.py \
   --texgen_model_path tencent/Hunyuan3D-2.1 \
   --low_vram_mode
 ```
-
 
 ## 🔗 BibTeX
 
@@ -184,7 +199,7 @@ If you found this repository helpful, please cite our reports:
 ## Acknowledgements
 
 We would like to thank the contributors to
-the [TripoSG](https://github.com/VAST-AI-Research/TripoSG), [Trellis](https://github.com/microsoft/TRELLIS),  [DINOv2](https://github.com/facebookresearch/dinov2), [Stable Diffusion](https://github.com/Stability-AI/stablediffusion), [FLUX](https://github.com/black-forest-labs/flux), [diffusers](https://github.com/huggingface/diffusers), [HuggingFace](https://huggingface.co), [CraftsMan3D](https://github.com/wyysf-98/CraftsMan3D), 
+the [TripoSG](https://github.com/VAST-AI-Research/TripoSG), [Trellis](https://github.com/microsoft/TRELLIS),  [DINOv2](https://github.com/facebookresearch/dinov2), [Stable Diffusion](https://github.com/Stability-AI/stablediffusion), [FLUX](https://github.com/black-forest-labs/flux), [diffusers](https://github.com/huggingface/diffusers), [HuggingFace](https://huggingface.co), [CraftsMan3D](https://github.com/wyysf-98/CraftsMan3D),
 and [Michelangelo](https://github.com/NeuralCarver/Michelangelo/tree/main) repositories, for their open research and
 exploration.
 

@@ -19,13 +19,13 @@ import trimesh
 import numpy as np
 from PIL import Image
 from typing import List
-from DifferentiableRenderer.MeshRender import MeshRender
-from utils.simplify_mesh_utils import remesh_mesh
-from utils.multiview_utils import multiviewDiffusionNet
-from utils.pipeline_utils import ViewProcessor
-from utils.image_super_utils import imageSuperNet
-from utils.uvwrap_utils import mesh_uv_wrap
-from DifferentiableRenderer.mesh_utils import convert_obj_to_glb
+from hy3dpaint.DifferentiableRenderer.MeshRender import MeshRender
+from hy3dpaint.DifferentiableRenderer.mesh_utils import convert_obj_to_glb
+from hy3dpaint.utils.image_super_utils import imageSuperNet
+from hy3dpaint.utils.multiview_utils import multiviewDiffusionNet
+from hy3dpaint.utils.pipeline_utils import ViewProcessor
+from hy3dpaint.utils.simplify_mesh_utils import remesh_mesh
+from hy3dpaint.utils.uvwrap_utils import mesh_uv_wrap
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -36,13 +36,13 @@ diffusers_logging.set_verbosity(50)
 
 class Hunyuan3DPaintConfig:
     def __init__(self, max_num_view, resolution):
-        self.device = "cuda"
+        self.device = os.getenv("HY3D_TEX_DEVICE", "cuda")
 
-        self.multiview_cfg_path = "cfgs/hunyuan-paint-pbr.yaml"
-        self.custom_pipeline = "hunyuanpaintpbr"
-        self.multiview_pretrained_path = "tencent/Hunyuan3D-2.1"
-        self.dino_ckpt_path = "facebook/dinov2-giant"
-        self.realesrgan_ckpt_path = "ckpt/RealESRGAN_x4plus.pth"
+        self.multiview_cfg_path = os.getenv("HY3D_TEX_CFG_PATH", "cfgs/hunyuan-paint-pbr.yaml")
+        self.custom_pipeline = os.getenv("HY3D_TEX_CUSTOM_PIPELINE", "hunyuanpaintpbr")
+        self.multiview_pretrained_path = os.getenv("HY3D_TEXGEN_MODEL_PATH", "tencent/Hunyuan3D-2.1")
+        self.dino_ckpt_path = os.getenv("HY3D_DINO_MODEL_PATH", "facebook/dinov2-giant")
+        self.realesrgan_ckpt_path = os.getenv("HY3D_REALESRGAN_PATH", "ckpt/RealESRGAN_x4plus.pth")
 
         self.raster_mode = "cr"
         self.bake_mode = "back_sample"

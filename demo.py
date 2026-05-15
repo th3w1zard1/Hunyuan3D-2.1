@@ -1,19 +1,10 @@
-import sys
-sys.path.insert(0, './hy3dshape')
-sys.path.insert(0, './hy3dpaint')
-
 from PIL import Image
+from hy3dpaint.bootstrap import apply_torchvision_compatibility_fix
 from hy3dshape.rembg import BackgroundRemover
 from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline
-from textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
+from hy3dpaint.textureGenPipeline import Hunyuan3DPaintConfig, Hunyuan3DPaintPipeline
 
-try:
-    from torchvision_fix import apply_fix
-    apply_fix()
-except ImportError:
-    print("Warning: torchvision_fix module not found, proceeding without compatibility fix")                                      
-except Exception as e:
-    print(f"Warning: Failed to apply torchvision fix: {e}")
+apply_torchvision_compatibility_fix()
 
 # shape
 model_path = 'tencent/Hunyuan3D-2.1'

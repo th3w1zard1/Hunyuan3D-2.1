@@ -1,0 +1,11 @@
+--extra-index-url https://download.blender.org/pypi/
+-r base.txt
+-r build.txt
+torch==2.5.1
+torchaudio==2.5.1
+torchvision==0.20.1
+pytorch-lightning==1.9.5
+tb-nightly==2.18.0a20240726
+torchmetrics==1.6.0
+cupy-cuda12x==13.4.1
+bpy==4.0
