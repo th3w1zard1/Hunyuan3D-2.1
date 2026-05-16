@@ -38,7 +38,7 @@ dependencies = [
     "realesrgan==0.3.0",
     "rembg==2.0.65",
     "safetensors==0.4.4",
-    "scikit-image==0.24.0",
+    "scikit-image==0.25.2",
     "scipy==1.14.1",
     "timm>=1.0,<2",
     "tqdm==4.66.5",
