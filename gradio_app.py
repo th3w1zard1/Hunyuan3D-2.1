@@ -31,15 +31,18 @@ from hy3dpaint.bootstrap import (
 )
 
 exit_if_unsupported_runtime_python()
-import gradio as gr
-import torch
-import trimesh
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from hy3dshape.utils import logger
 
-from hy3dpaint.convert_utils import create_glb_with_pbr_materials
+# These imports intentionally follow the runtime guard so unsupported Python
+# versions fail before importing heavyweight UI/runtime dependencies.
+import gradio as gr  # noqa: E402
+import torch  # noqa: E402
+import trimesh  # noqa: E402
+import uvicorn  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+from hy3dshape.utils import logger  # noqa: E402
+
+from hy3dpaint.convert_utils import create_glb_with_pbr_materials  # noqa: E402
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAX_SEED = int(1e7)
