@@ -20,7 +20,7 @@ dependencies = [
     "fastapi==0.115.12",
     "gradio==5.33.0",
     "huggingface-hub==0.30.2",
-    "imageio==2.36.0",
+    "imageio==2.37.3",
     "numpy==1.24.4",
     "omegaconf==2.3.0",
     "onnxruntime==1.16.3",

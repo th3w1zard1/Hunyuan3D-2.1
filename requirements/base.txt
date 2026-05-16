@@ -20,7 +20,7 @@ scipy==1.14.1
 pandas==2.2.2
 packaging>=24,<26
 pillow>=10,<12
-imageio==2.36.0
+imageio==2.37.3
 scikit-image==0.24.0
 realesrgan==0.3.0
 basicsr==1.4.2
