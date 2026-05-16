@@ -24,8 +24,37 @@ permissions:
   contents: read
 
 jobs:
+  precheck:
+    runs-on: ubuntu-latest
+    outputs:
+      should_sync: ${{ steps.flags.outputs.should_sync }}
+      has_hf_token: ${{ steps.flags.outputs.has_hf_token }}
+    steps:
+      - name: Resolve sync prerequisites
+        id: flags
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          HF_SPACE_AUTO_SYNC: ${{ vars.HF_SPACE_AUTO_SYNC }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          should_sync=false
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" || "$HF_SPACE_AUTO_SYNC" == "true" ]]; then
+            should_sync=true
+          fi
+
+          has_hf_token=false
+          if [[ -n "$HF_TOKEN" ]]; then
+            has_hf_token=true
+          fi
+
+          {
+            echo "should_sync=$should_sync"
+            echo "has_hf_token=$has_hf_token"
+          } >> "$GITHUB_OUTPUT"
+
   missing-hf-token:
-    if: secrets.HF_TOKEN == '' && (github.event_name == 'workflow_dispatch' || vars.HF_SPACE_AUTO_SYNC == 'true')
+    needs: precheck
+    if: needs.precheck.outputs.should_sync == 'true' && needs.precheck.outputs.has_hf_token != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Report skipped Space sync
@@ -33,7 +62,8 @@ jobs:
           echo "::warning::HF_TOKEN is not configured for GitHub Actions; skipping Hugging Face Space sync."
 
   preflight:
-    if: secrets.HF_TOKEN != '' && (github.event_name == 'workflow_dispatch' || vars.HF_SPACE_AUTO_SYNC == 'true')
+    needs: precheck
+    if: needs.precheck.outputs.should_sync == 'true' && needs.precheck.outputs.has_hf_token == 'true'
     runs-on: ubuntu-latest
     outputs:
       repo_id: ${{ steps.resolve.outputs.repo_id }}
