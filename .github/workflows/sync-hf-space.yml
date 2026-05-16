@@ -24,8 +24,16 @@ permissions:
   contents: read
 
 jobs:
+  missing-hf-token:
+    if: secrets.HF_TOKEN == '' && (github.event_name == 'workflow_dispatch' || vars.HF_SPACE_AUTO_SYNC == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report skipped Space sync
+        run: |
+          echo "::warning::HF_TOKEN is not configured for GitHub Actions; skipping Hugging Face Space sync."
+
   preflight:
-    if: github.event_name == 'workflow_dispatch' || vars.HF_SPACE_AUTO_SYNC == 'true'
+    if: secrets.HF_TOKEN != '' && (github.event_name == 'workflow_dispatch' || vars.HF_SPACE_AUTO_SYNC == 'true')
     runs-on: ubuntu-latest
     outputs:
       repo_id: ${{ steps.resolve.outputs.repo_id }}

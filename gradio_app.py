@@ -12,28 +12,22 @@
 # fine-tuning enabling code and other elements of the foregoing made publicly available
 # by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
 
-# Apply torchvision compatibility fix before other imports
 from __future__ import annotations
-
-import sys
-
-from hy3dpaint.bootstrap import (
-    apply_torchvision_compatibility_fix,
-    prepare_runtime_environment,
-)
-
-pythonpath = sys.executable
-print(pythonpath)
-
 
 import os
 import random
+import sys
 import shutil
 import time
 import traceback
 import uuid
 from glob import glob
 from pathlib import Path
+
+from hy3dpaint.bootstrap import (
+    apply_torchvision_compatibility_fix,
+    prepare_runtime_environment,
+)
 
 import gradio as gr
 import torch
@@ -47,8 +41,8 @@ from hy3dpaint.convert_utils import create_glb_with_pbr_materials
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAX_SEED = int(1e7)
-
-apply_torchvision_compatibility_fix()
+pythonpath = sys.executable
+t2i_worker = None
 
 
 def _env_flag(name, default=False):
@@ -324,6 +318,11 @@ def _gen_shape(
     time_meta = {}
 
     if image is None:
+        if t2i_worker is None:
+            raise gr.Error(
+                "Text to 3D is disable. "
+                "Please enable it by `python gradio_app.py --enable_t23d`."
+            )
         start_time = time.time()
         try:
             image = t2i_worker(caption)
@@ -448,7 +447,7 @@ def generation_all(
     tmp_time = time.time()
     # Convert textured OBJ to GLB using obj2gltf with PBR support
     glb_path_textured = os.path.join(save_folder, "textured_mesh.glb")
-    conversion_success = quick_convert_with_obj2gltf(path_textured, glb_path_textured)
+    quick_convert_with_obj2gltf(path_textured, glb_path_textured)
 
     logger.info(
         "---Convert textured OBJ to GLB takes %s seconds ---" % (time.time() - tmp_time)
@@ -563,7 +562,7 @@ def build_app():
 
         with gr.Row():
             with gr.Column(scale=3):
-                with gr.Tabs(selected="tab_img_prompt") as tabs_prompt:
+                with gr.Tabs(selected="tab_img_prompt"):
                     with gr.Tab(
                         "Image Prompt", id="tab_img_prompt", visible=not MV_MODE
                     ) as tab_ip:
@@ -575,7 +574,7 @@ def build_app():
                     #                        caption = gr.Textbox(label='Text Prompt',
                     #                                             placeholder='HunyuanDiT will be used to generate image.',
                     #                                             info='Example: A 3D model of a cute cat, white background')
-                    with gr.Tab("MultiView Prompt", visible=MV_MODE) as tab_mv:
+                    with gr.Tab("MultiView Prompt", visible=MV_MODE):
                         # gr.Label('Please upload at least one front image.')
                         with gr.Row():
                             mv_image_front = gr.Image(
@@ -728,7 +727,7 @@ Fast for very complex cases, Standard seldom use.",
                 with gr.Tabs(selected="tab_img_gallery") as gallery:
                     with gr.Tab(
                         "Image to 3D Gallery", id="tab_img_gallery", visible=not MV_MODE
-                    ) as tab_gi:
+                    ):
                         with gr.Row():
                             gr.Examples(
                                 examples=example_is,
