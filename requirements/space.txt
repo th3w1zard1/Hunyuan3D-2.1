@@ -4,7 +4,7 @@
 # Hugging Face Spaces injects gradio, spaces, uvicorn, websockets, and a torch upper bound.
 # Keep the Space-specific requirements focused on the serving/runtime slice to avoid
 # resolver conflicts with platform-managed packages and unnecessary training extras.
-accelerate==1.1.1
+accelerate==1.13.0
 basicsr==1.4.2
 configargparse==1.7
 diffusers==0.30.0

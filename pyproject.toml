@@ -12,7 +12,7 @@ license = "LicenseRef-Tencent-Hunyuan-Non-Commercial"
 license-files = ["LICENSE"]
 authors = [{ name = "Tencent Hunyuan Team" }]
 dependencies = [
-    "accelerate==1.1.1",
+    "accelerate==1.13.0",
     "basicsr==1.4.2",
     "configargparse==1.7",
     "diffusers==0.30.0",
