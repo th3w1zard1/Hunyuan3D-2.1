@@ -1,9 +1,11 @@
 from importlib import import_module
 
 _EXPORTS = {
-    "Hunyuan3DPaintConfig": ".textureGenPipeline",
+    "Hunyuan3DPaintConfig": ".config",
     "Hunyuan3DPaintPipeline": ".textureGenPipeline",
     "create_glb_with_pbr_materials": ".convert_utils",
+    "get_glb_conversion_dependency_error_message": ".glb_support",
+    "is_glb_conversion_available": ".glb_support",
 }
 
 

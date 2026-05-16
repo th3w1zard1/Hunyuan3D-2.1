@@ -104,11 +104,11 @@ Hunyuan3D 2.1 supports Macos, Windows, Linux. You may follow the next steps to u
 
 ### Install Requirements
 
-We test our model on an A100 GPU with Python 3.10 and PyTorch 2.5.1+cu124.
+We test our model on an A100 GPU with Python 3.10 and PyTorch 2.5.1+cu124. For the pinned runtime stack in this repo, the official CUDA 12.4 wheels are available for CPython 3.10 through 3.13.
 
 ```bash
-# Recommended editable install for local development
-pip install -e .[torch,build]
+# Recommended editable install for local development and direct GLB output
+pip install -e .[torch,build,glb]
 python scripts/bootstrap_runtime.py
 
 # Space-compatible install path that matches the checked-in requirements layering
@@ -120,11 +120,15 @@ If you need the exact CUDA 12.4 torch wheels used for the official environment, 
 
 ```bash
 pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-pip install -e .[build]
+pip install -e .[build,glb]
 python scripts/bootstrap_runtime.py
 ```
 
-The runtime bootstrap step replaces the old manual compile flow. It installs the custom rasterizer from the bundled wheel when present, falls back to building it from source when the wheel is absent, and compiles the mesh painter helper automatically.
+The pinned runtime stack is verified on Python 3.10. During current Linux validation, Python 3.14 could not resolve the pinned `torch==2.5.1` wheels, and the official CUDA 12.4 wheel index exposes `cp310` through `cp313` builds but not `cp314`, so use Python 3.10 through 3.13 for runtime installation.
+
+Direct GLB conversion uses Blender's Python API via `bpy==4.0`. The recommended editable install includes the `glb` extra; if Blender is unavailable and you do not explicitly target a `.glb` path, the paint pipeline and checked-in demos now fall back to OBJ automatically. Pass `save_glb=False` to force OBJ output, or install the `glb` extra when you require GLB output.
+
+The runtime bootstrap step replaces the old manual compile flow. It installs the custom rasterizer from the bundled wheel when that wheel matches the active interpreter, otherwise it falls back to building from the bundled source package, and it compiles the mesh painter helper automatically.
 
 Additional operator and deployment documentation:
 
@@ -137,19 +141,31 @@ We designed a diffusers-like API to use our shape generation model - Hunyuan3D-S
 Hunyuan3D-Paint.
 
 ```python
-import sys
-sys.path.insert(0, './hy3dshape')
-sys.path.insert(0, './hy3dpaint')
-from textureGenPipeline import Hunyuan3DPaintPipeline
-from textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
+from hy3dpaint import (
+  Hunyuan3DPaintConfig,
+  Hunyuan3DPaintPipeline,
+  is_glb_conversion_available,
+)
+from hy3dshape import Hunyuan3DDiTFlowMatchingPipeline
 
 # let's generate a mesh first
-shape_pipeline = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained('tencent/Hunyuan3D-2.1')
-mesh_untextured = shape_pipeline(image='assets/demo.png')[0]
+shape_pipeline = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained("tencent/Hunyuan3D-2.1")
+mesh_untextured = shape_pipeline(image="assets/demo.png")[0]
+mesh_untextured.export("demo.glb")
 
-paint_pipeline = Hunyuan3DPaintPipeline(Hunyuan3DPaintConfig(max_num_view=6, resolution=512))
-mesh_textured = paint_pipeline(mesh_path, image_path='assets/demo.png')
+paint_pipeline = Hunyuan3DPaintPipeline(
+  Hunyuan3DPaintConfig(max_num_view=6, resolution=512)
+)
+save_glb = is_glb_conversion_available()
+output_mesh_path = paint_pipeline(
+  mesh_path="demo.glb",
+  image_path="assets/demo.png",
+  save_glb=save_glb,
+)
+print(output_mesh_path)
 ```
+
+If Blender is unavailable and you do not explicitly target a `.glb` file, the paint pipeline now falls back to OBJ output automatically and returns the `.obj` path instead. Pass `save_glb=False` to force OBJ output, or install the `glb` extra when you require GLB output.
 
 ### Gradio App
 

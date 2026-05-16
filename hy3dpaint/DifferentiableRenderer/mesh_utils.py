@@ -14,11 +14,12 @@
 
 import os
 import cv2
-import bpy
 import math
 import numpy as np
 from io import StringIO
 from typing import Optional, Tuple, Dict, Any
+
+from hy3dpaint.glb_support import load_bpy
 
 
 def _safe_extract_attribute(obj: Any, attr_path: str, default: Any = None) -> Any:
@@ -95,7 +96,11 @@ def _write_mtl_properties(f, properties: Dict[str, Any]):
 
 
 def _create_obj_content(
-    vtx_pos: np.ndarray, vtx_uv: np.ndarray, pos_idx: np.ndarray, uv_idx: np.ndarray, name: str
+    vtx_pos: np.ndarray,
+    vtx_uv: np.ndarray,
+    pos_idx: np.ndarray,
+    uv_idx: np.ndarray,
+    name: str,
 ) -> str:
     """Create OBJ file content."""
     buffer = StringIO()
@@ -117,7 +122,17 @@ def _create_obj_content(
     return buffer.getvalue()
 
 
-def save_obj_mesh(mesh_path, vtx_pos, pos_idx, vtx_uv, uv_idx, texture, metallic=None, roughness=None, normal=None):
+def save_obj_mesh(
+    mesh_path,
+    vtx_pos,
+    pos_idx,
+    vtx_uv,
+    uv_idx,
+    texture,
+    metallic=None,
+    roughness=None,
+    normal=None,
+):
     """Save mesh as OBJ file with textures and material."""
     # Convert inputs to numpy arrays
     vtx_pos = _convert_to_numpy(vtx_pos, np.float32)
@@ -137,7 +152,9 @@ def save_obj_mesh(mesh_path, vtx_pos, pos_idx, vtx_uv, uv_idx, texture, metallic
     texture_maps["diffuse"] = _save_texture_map(texture, base_path)
 
     if metallic is not None:
-        texture_maps["metallic"] = _save_texture_map(metallic, base_path, "_metallic", color_convert=cv2.COLOR_RGB2GRAY)
+        texture_maps["metallic"] = _save_texture_map(
+            metallic, base_path, "_metallic", color_convert=cv2.COLOR_RGB2GRAY
+        )
     if roughness is not None:
         texture_maps["roughness"] = _save_texture_map(
             roughness, base_path, "_roughness", color_convert=cv2.COLOR_RGB2GRAY
@@ -169,7 +186,11 @@ def _create_mtl_file(base_path: str, texture_maps: Dict[str, str], is_pbr: bool)
             _write_mtl_properties(f, properties)
 
             # Additional PBR maps
-            map_configs = [("metallic", "map_Pm"), ("roughness", "map_Pr"), ("normal", "map_Bump -bm 1.0")]
+            map_configs = [
+                ("metallic", "map_Pm"),
+                ("roughness", "map_Pr"),
+                ("normal", "map_Bump -bm 1.0"),
+            ]
 
             for texture_key, mtl_key in map_configs:
                 if texture_key in texture_maps:
@@ -190,71 +211,91 @@ def _create_mtl_file(base_path: str, texture_maps: Dict[str, str], is_pbr: bool)
             _write_mtl_properties(f, properties)
 
 
-def save_mesh(mesh_path, vtx_pos, pos_idx, vtx_uv, uv_idx, texture, metallic=None, roughness=None, normal=None):
+def save_mesh(
+    mesh_path,
+    vtx_pos,
+    pos_idx,
+    vtx_uv,
+    uv_idx,
+    texture,
+    metallic=None,
+    roughness=None,
+    normal=None,
+):
     """Save mesh using OBJ format."""
     save_obj_mesh(
-        mesh_path, vtx_pos, pos_idx, vtx_uv, uv_idx, texture, metallic=metallic, roughness=roughness, normal=normal
+        mesh_path,
+        vtx_pos,
+        pos_idx,
+        vtx_uv,
+        uv_idx,
+        texture,
+        metallic=metallic,
+        roughness=roughness,
+        normal=normal,
     )
 
 
-def _setup_blender_scene():
+def _setup_blender_scene(bpy_module):
     """Setup Blender scene for conversion."""
-    if "convert" not in bpy.data.scenes:
-        bpy.data.scenes.new("convert")
-    bpy.context.window.scene = bpy.data.scenes["convert"]
+    if "convert" not in bpy_module.data.scenes:
+        bpy_module.data.scenes.new("convert")
+    bpy_module.context.window.scene = bpy_module.data.scenes["convert"]
 
 
-def _clear_scene_objects():
+def _clear_scene_objects(bpy_module):
     """Clear all objects from current Blender scene."""
-    for obj in bpy.context.scene.objects:
+    for obj in bpy_module.context.scene.objects:
         obj.select_set(True)
-        bpy.data.objects.remove(obj, do_unlink=True)
+        bpy_module.data.objects.remove(obj, do_unlink=True)
 
 
-def _select_mesh_objects():
+def _select_mesh_objects(bpy_module):
     """Select all mesh objects in scene."""
-    bpy.ops.object.select_all(action="DESELECT")
-    for obj in bpy.context.scene.objects:
+    bpy_module.ops.object.select_all(action="DESELECT")
+    for obj in bpy_module.context.scene.objects:
         if obj.type == "MESH":
             obj.select_set(True)
 
 
-def _merge_vertices_if_needed(merge_vertices: bool):
+def _merge_vertices_if_needed(bpy_module, merge_vertices: bool):
     """Merge duplicate vertices if requested."""
     if not merge_vertices:
         return
 
-    for obj in bpy.context.selected_objects:
+    for obj in bpy_module.context.selected_objects:
         if obj.type == "MESH":
-            bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.mode_set(mode="EDIT")
-            bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.mesh.remove_doubles()
-            bpy.ops.object.mode_set(mode="OBJECT")
+            bpy_module.context.view_layer.objects.active = obj
+            bpy_module.ops.object.mode_set(mode="EDIT")
+            bpy_module.ops.mesh.select_all(action="SELECT")
+            bpy_module.ops.mesh.remove_doubles()
+            bpy_module.ops.object.mode_set(mode="OBJECT")
 
 
-def _apply_shading(shade_type: str, auto_smooth_angle: float):
+def _apply_shading(bpy_module, shade_type: str, auto_smooth_angle: float):
     """Apply shading to selected objects."""
     shading_ops = {
-        "SMOOTH": lambda: bpy.ops.object.shade_smooth(),
-        "FLAT": lambda: bpy.ops.object.shade_flat(),
-        "AUTO_SMOOTH": lambda: _apply_auto_smooth(auto_smooth_angle),
+        "SMOOTH": lambda: bpy_module.ops.object.shade_smooth(),
+        "FLAT": lambda: bpy_module.ops.object.shade_flat(),
+        "AUTO_SMOOTH": lambda: _apply_auto_smooth(bpy_module, auto_smooth_angle),
     }
 
     if shade_type in shading_ops:
         shading_ops[shade_type]()
 
 
-def _apply_auto_smooth(auto_smooth_angle: float):
+def _apply_auto_smooth(bpy_module, auto_smooth_angle: float):
     """Apply auto smooth based on Blender version."""
     angle_rad = math.radians(auto_smooth_angle)
 
-    if bpy.app.version < (4, 1, 0):
-        bpy.ops.object.shade_smooth(use_auto_smooth=True, auto_smooth_angle=angle_rad)
-    elif bpy.app.version < (4, 2, 0):
-        bpy.ops.object.shade_smooth_by_angle(angle=angle_rad)
+    if bpy_module.app.version < (4, 1, 0):
+        bpy_module.ops.object.shade_smooth(
+            use_auto_smooth=True, auto_smooth_angle=angle_rad
+        )
+    elif bpy_module.app.version < (4, 2, 0):
+        bpy_module.ops.object.shade_smooth_by_angle(angle=angle_rad)
     else:
-        bpy.ops.object.shade_auto_smooth(angle=angle_rad)
+        bpy_module.ops.object.shade_auto_smooth(angle=angle_rad)
 
 
 def convert_obj_to_glb(
@@ -265,20 +306,22 @@ def convert_obj_to_glb(
     merge_vertices: bool = False,
 ) -> bool:
     """Convert OBJ file to GLB format using Blender."""
+    bpy_module = load_bpy()
+
     try:
-        _setup_blender_scene()
-        _clear_scene_objects()
+        _setup_blender_scene(bpy_module)
+        _clear_scene_objects(bpy_module)
 
         # Import OBJ file
-        bpy.ops.wm.obj_import(filepath=obj_path)
-        _select_mesh_objects()
+        bpy_module.ops.wm.obj_import(filepath=obj_path)
+        _select_mesh_objects(bpy_module)
 
         # Process meshes
-        _merge_vertices_if_needed(merge_vertices)
-        _apply_shading(shade_type, auto_smooth_angle)
+        _merge_vertices_if_needed(bpy_module, merge_vertices)
+        _apply_shading(bpy_module, shade_type, auto_smooth_angle)
 
         # Export to GLB
-        bpy.ops.export_scene.gltf(filepath=glb_path, use_active_scene=True)
+        bpy_module.ops.export_scene.gltf(filepath=glb_path, use_active_scene=True)
         return True
     except Exception:
         return False

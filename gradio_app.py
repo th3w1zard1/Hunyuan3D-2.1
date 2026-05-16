@@ -24,11 +24,13 @@ import uuid
 from glob import glob
 from pathlib import Path
 
+from hy3dpaint.runtime_compat import exit_if_unsupported_runtime_python
 from hy3dpaint.bootstrap import (
     apply_torchvision_compatibility_fix,
     prepare_runtime_environment,
 )
 
+exit_if_unsupported_runtime_python()
 import gradio as gr
 import torch
 import trimesh
@@ -990,13 +992,13 @@ if __name__ == "__main__":
             conf.multiview_pretrained_path = args.texgen_model_path
             conf.dino_ckpt_path = os.getenv("HY3D_DINO_MODEL_PATH", conf.dino_ckpt_path)
             conf.realesrgan_ckpt_path = os.getenv(
-                "HY3D_REALESRGAN_PATH", "hy3dpaint/ckpt/RealESRGAN_x4plus.pth"
+                "HY3D_REALESRGAN_PATH", conf.realesrgan_ckpt_path
             )
             conf.multiview_cfg_path = os.getenv(
-                "HY3D_TEX_CFG_PATH", "hy3dpaint/cfgs/hunyuan-paint-pbr.yaml"
+                "HY3D_TEX_CFG_PATH", conf.multiview_cfg_path
             )
             conf.custom_pipeline = os.getenv(
-                "HY3D_TEX_CUSTOM_PIPELINE", "hy3dpaint/hunyuanpaintpbr"
+                "HY3D_TEX_CUSTOM_PIPELINE", conf.custom_pipeline
             )
             tex_pipeline = Hunyuan3DPaintPipeline(conf)
 

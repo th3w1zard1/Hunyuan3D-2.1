@@ -18,7 +18,12 @@ import copy
 import trimesh
 import numpy as np
 from PIL import Image
-from typing import List
+from typing import Any, List
+from hy3dpaint.image_batches import resize_image_groups
+from hy3dpaint.glb_support import resolve_save_glb
+from hy3dpaint.output_paths import resolve_texture_output_paths
+from hy3dpaint.pipeline_inputs import normalize_image_prompt
+from hy3dpaint.config import Hunyuan3DPaintConfig
 from hy3dpaint.DifferentiableRenderer.MeshRender import MeshRender
 from hy3dpaint.DifferentiableRenderer.mesh_utils import convert_obj_to_glb
 from hy3dpaint.utils.image_super_utils import imageSuperNet
@@ -34,46 +39,11 @@ from diffusers.utils import logging as diffusers_logging
 diffusers_logging.set_verbosity(50)
 
 
-class Hunyuan3DPaintConfig:
-    def __init__(self, max_num_view, resolution):
-        self.device = os.getenv("HY3D_TEX_DEVICE", "cuda")
-
-        self.multiview_cfg_path = os.getenv("HY3D_TEX_CFG_PATH", "cfgs/hunyuan-paint-pbr.yaml")
-        self.custom_pipeline = os.getenv("HY3D_TEX_CUSTOM_PIPELINE", "hunyuanpaintpbr")
-        self.multiview_pretrained_path = os.getenv("HY3D_TEXGEN_MODEL_PATH", "tencent/Hunyuan3D-2.1")
-        self.dino_ckpt_path = os.getenv("HY3D_DINO_MODEL_PATH", "facebook/dinov2-giant")
-        self.realesrgan_ckpt_path = os.getenv("HY3D_REALESRGAN_PATH", "ckpt/RealESRGAN_x4plus.pth")
-
-        self.raster_mode = "cr"
-        self.bake_mode = "back_sample"
-        self.render_size = 1024 * 2
-        self.texture_size = 1024 * 4
-        self.max_selected_view_num = max_num_view
-        self.resolution = resolution
-        self.bake_exp = 4
-        self.merge_method = "fast"
-
-        # view selection
-        self.candidate_camera_azims = [0, 90, 180, 270, 0, 180]
-        self.candidate_camera_elevs = [0, 0, 0, 0, 90, -90]
-        self.candidate_view_weights = [1, 0.1, 0.5, 0.1, 0.05, 0.05]
-
-        for azim in range(0, 360, 30):
-            self.candidate_camera_azims.append(azim)
-            self.candidate_camera_elevs.append(20)
-            self.candidate_view_weights.append(0.01)
-
-            self.candidate_camera_azims.append(azim)
-            self.candidate_camera_elevs.append(-20)
-            self.candidate_view_weights.append(0.01)
-
-
 class Hunyuan3DPaintPipeline:
-
-    def __init__(self, config=None) -> None:
+    def __init__(self, config: Hunyuan3DPaintConfig | None = None) -> None:
         self.config = config if config is not None else Hunyuan3DPaintConfig()
-        self.models = {}
-        self.stats_logs = {}
+        self.models: dict[str, Any] = {}
+        self.stats_logs: dict[str, Any] = {}
         self.render = MeshRender(
             default_resolution=self.config.render_size,
             texture_size=self.config.texture_size,
@@ -90,17 +60,24 @@ class Hunyuan3DPaintPipeline:
         print("Models Loaded.")
 
     @torch.no_grad()
-    def __call__(self, mesh_path=None, image_path=None, output_mesh_path=None, use_remesh=True, save_glb=True):
+    def __call__(
+        self,
+        mesh_path=None,
+        image_path=None,
+        output_mesh_path=None,
+        use_remesh=True,
+        save_glb=True,
+    ):
         """Generate texture for 3D mesh using multiview diffusion"""
-        # Ensure image_prompt is a list
-        if isinstance(image_path, str):
-            image_prompt = Image.open(image_path)
-        elif isinstance(image_path, Image.Image):
-            image_prompt = image_path
-        if not isinstance(image_prompt, List):
-            image_prompt = [image_prompt]
-        else:
-            image_prompt = image_path
+        if mesh_path is None:
+            raise ValueError("mesh_path is required")
+
+        save_glb = resolve_save_glb(output_mesh_path, save_glb)
+        obj_output_path, glb_output_path, result_output_path = (
+            resolve_texture_output_paths(mesh_path, output_mesh_path, save_glb)
+        )
+
+        image_prompt = normalize_image_prompt(image_path)
 
         # Process mesh
         path = os.path.dirname(mesh_path)
@@ -110,27 +87,27 @@ class Hunyuan3DPaintPipeline:
         else:
             processed_mesh_path = mesh_path
 
-        # Output path
-        if output_mesh_path is None:
-            output_mesh_path = os.path.join(path, f"textured_mesh.obj")
-
         # Load mesh
         mesh = trimesh.load(processed_mesh_path)
         mesh = mesh_uv_wrap(mesh)
         self.render.load_mesh(mesh=mesh)
 
         ########### View Selection #########
-        selected_camera_elevs, selected_camera_azims, selected_view_weights = self.view_processor.bake_view_selection(
-            self.config.candidate_camera_elevs,
-            self.config.candidate_camera_azims,
-            self.config.candidate_view_weights,
-            self.config.max_selected_view_num,
+        selected_camera_elevs, selected_camera_azims, selected_view_weights = (
+            self.view_processor.bake_view_selection(
+                self.config.candidate_camera_elevs,
+                self.config.candidate_camera_azims,
+                self.config.candidate_view_weights,
+                self.config.max_selected_view_num,
+            )
         )
 
         normal_maps = self.view_processor.render_normal_multiview(
             selected_camera_elevs, selected_camera_azims, use_abs_coor=True
         )
-        position_maps = self.view_processor.render_position_multiview(selected_camera_elevs, selected_camera_azims)
+        position_maps = self.view_processor.render_position_multiview(
+            selected_camera_elevs, selected_camera_azims
+        )
 
         ##########  Style  ###########
         image_caption = "high quality"
@@ -158,21 +135,29 @@ class Hunyuan3DPaintPipeline:
         enhance_images["mr"] = copy.deepcopy(multiviews_pbr["mr"])
 
         for i in range(len(enhance_images["albedo"])):
-            enhance_images["albedo"][i] = self.models["super_model"](enhance_images["albedo"][i])
-            enhance_images["mr"][i] = self.models["super_model"](enhance_images["mr"][i])
+            enhance_images["albedo"][i] = self.models["super_model"](
+                enhance_images["albedo"][i]
+            )
+            enhance_images["mr"][i] = self.models["super_model"](
+                enhance_images["mr"][i]
+            )
 
         ###########  Bake  ##########
-        for i in range(len(enhance_images)):
-            enhance_images["albedo"][i] = enhance_images["albedo"][i].resize(
-                (self.config.render_size, self.config.render_size)
-            )
-            enhance_images["mr"][i] = enhance_images["mr"][i].resize((self.config.render_size, self.config.render_size))
+        enhance_images = resize_image_groups(
+            enhance_images, (self.config.render_size, self.config.render_size)
+        )
         texture, mask = self.view_processor.bake_from_multiview(
-            enhance_images["albedo"], selected_camera_elevs, selected_camera_azims, selected_view_weights
+            enhance_images["albedo"],
+            selected_camera_elevs,
+            selected_camera_azims,
+            selected_view_weights,
         )
         mask_np = (mask.squeeze(-1).cpu().numpy() * 255).astype(np.uint8)
         texture_mr, mask_mr = self.view_processor.bake_from_multiview(
-            enhance_images["mr"], selected_camera_elevs, selected_camera_azims, selected_view_weights
+            enhance_images["mr"],
+            selected_camera_elevs,
+            selected_camera_azims,
+            selected_view_weights,
         )
         mask_mr_np = (mask_mr.squeeze(-1).cpu().numpy() * 255).astype(np.uint8)
 
@@ -183,10 +168,13 @@ class Hunyuan3DPaintPipeline:
             texture_mr = self.view_processor.texture_inpaint(texture_mr, mask_mr_np)
             self.render.set_texture_mr(texture_mr)
 
-        self.render.save_mesh(output_mesh_path, downsample=True)
+        self.render.save_mesh(obj_output_path, downsample=True)
 
-        if save_glb:
-            convert_obj_to_glb(output_mesh_path, output_mesh_path.replace(".obj", ".glb"))
-            output_glb_path = output_mesh_path.replace(".obj", ".glb")
+        if glb_output_path is not None and not convert_obj_to_glb(
+            obj_output_path, glb_output_path
+        ):
+            raise RuntimeError(
+                f"Failed to convert textured mesh from {obj_output_path} to {glb_output_path}"
+            )
 
-        return output_mesh_path
+        return result_output_path

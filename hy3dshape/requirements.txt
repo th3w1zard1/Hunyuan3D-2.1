@@ -5,6 +5,7 @@ diffusers
 einops
 opencv-python
 numpy
+pillow>=10,<12
 torch
 transformers
 torchvision

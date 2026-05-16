@@ -20,11 +20,11 @@ This creates the GitHub repo under the authenticated `gh` user by default and ad
 ### 2. Prepare runtime artifacts locally
 
 ```bash
-python -m pip install -e .[torch,build]
+python -m pip install -e .[torch,build,glb]
 python scripts/bootstrap_runtime.py
 ```
 
-The bootstrap script applies the torchvision compatibility fix, installs `custom_rasterizer` from the bundled wheel when available, falls back to building it from source when the wheel is absent, and compiles the mesh painter helper if needed.
+The bootstrap script applies the torchvision compatibility fix, installs `custom_rasterizer` from the bundled wheel when that wheel is compatible with the active interpreter, falls back to building it from source otherwise, and compiles the mesh painter helper if needed.
 
 ## GitHub Actions Setup
 

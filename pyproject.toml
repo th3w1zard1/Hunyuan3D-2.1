@@ -7,7 +7,7 @@ name = "hunyuan3d-2-1"
 version = "0.1.0"
 description = "Hunyuan3D-2.1 shape and texture generation workspace"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = "LicenseRef-Tencent-Hunyuan-Non-Commercial"
 license-files = ["LICENSE"]
 authors = [{ name = "Tencent Hunyuan Team" }]
@@ -18,7 +18,7 @@ dependencies = [
     "diffusers==0.30.0",
     "einops==0.8.0",
     "fastapi==0.115.12",
-    "gradio==5.33.0",
+    "gradio==4.44.0",
     "huggingface-hub==0.30.2",
     "imageio==2.36.0",
     "numpy==1.24.4",
@@ -27,6 +27,8 @@ dependencies = [
     "open3d==0.18.0",
     "opencv-python==4.10.0.84",
     "pandas==2.2.2",
+    "packaging>=24,<26",
+    "pillow>=10,<12",
     "psutil==6.0.0",
     "pydantic==2.10.6",
     "pygltflib==1.16.3",
@@ -47,11 +49,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-torch = [
-    "torch==2.5.1",
-    "torchaudio==2.5.1",
-    "torchvision==0.20.1",
-]
+torch = ["torch==2.5.1", "torchaudio==2.5.1", "torchvision==0.20.1"]
+glb = ["bpy==4.0"]
 cuda = ["cupy-cuda12x==13.4.1"]
 train = [
     "pytorch-lightning==1.9.5",
@@ -64,10 +63,7 @@ build = [
     "pybind11==2.13.4",
     "wheel>=0.45,<1",
 ]
-test = [
-    "pytest>=8.3,<9",
-    "pytest-cov>=6,<7",
-]
+test = ["pytest>=8.3,<9", "pytest-cov>=6,<7"]
 dev = [
     "build>=1.2,<2",
     "mypy>=1.13,<2",

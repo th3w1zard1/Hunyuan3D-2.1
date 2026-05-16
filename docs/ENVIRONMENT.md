@@ -17,9 +17,9 @@ This project now supports two configuration layers:
 | `HY3D_DISABLE_TEX` | Auto-derived from hardware on Spaces | Force-disable texture generation. |
 | `HY3D_LOW_VRAM_MODE` | Auto-derived from hardware on Spaces | Enable lower-memory execution mode. |
 | `HY3D_DINO_MODEL_PATH` | `facebook/dinov2-giant` | DINO checkpoint or repo id used by texture generation. |
-| `HY3D_REALESRGAN_PATH` | `hy3dpaint/ckpt/RealESRGAN_x4plus.pth` | RealESRGAN checkpoint path. |
-| `HY3D_TEX_CFG_PATH` | `hy3dpaint/cfgs/hunyuan-paint-pbr.yaml` | Texture model config path. |
-| `HY3D_TEX_CUSTOM_PIPELINE` | `hy3dpaint/hunyuanpaintpbr` | Custom Diffusers pipeline module path. |
+| `HY3D_REALESRGAN_PATH` | bundled `hy3dpaint` checkpoint | Override the packaged RealESRGAN checkpoint path. |
+| `HY3D_TEX_CFG_PATH` | bundled `hy3dpaint` config | Override the packaged texture model config path. |
+| `HY3D_TEX_CUSTOM_PIPELINE` | bundled `hy3dpaint` pipeline module | Override the packaged custom Diffusers pipeline path. |
 | `HY3D_TEX_DEVICE` | `cuda` | Texture generation device override. |
 | `ACCELERATOR` | unset | Hugging Face hardware hint used to decide whether full texture generation should be enabled. |
 
@@ -45,6 +45,8 @@ These variables are intended for GitHub Actions repo variables or workflow input
 
 ## Notes
 
+- Texture generation defaults now resolve relative to the installed `hy3dpaint` package. Set `HY3D_REALESRGAN_PATH`, `HY3D_TEX_CFG_PATH`, or `HY3D_TEX_CUSTOM_PIPELINE` only when you need to override the bundled assets.
+- The pinned PyTorch runtime in this repo must be installed on a Python version with matching wheels. During current validation on Linux, `torch==2.5.1` did not resolve on Python 3.14, and the official CUDA 12.4 wheel index exposes `cp310` through `cp313` builds but not `cp314`.
 - The runtime bootstrap script is [scripts/bootstrap_runtime.py](../scripts/bootstrap_runtime.py).
 - The GitHub bootstrap helper is [scripts/bootstrap_github_repo.sh](../scripts/bootstrap_github_repo.sh).
 - The Space sync helper scripts are [scripts/resolve_hf_space_config.py](../scripts/resolve_hf_space_config.py) and [scripts/ensure_hf_space.py](../scripts/ensure_hf_space.py).

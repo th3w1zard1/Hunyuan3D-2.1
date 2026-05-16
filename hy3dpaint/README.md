@@ -2,18 +2,22 @@
 
 Hunyuan3D-Paint 2.1 is a high quality PBR texture generation model for 3D meshes, powered by [RomanTex](https://github.com/oakshy/RomanTex) and [MaterialMVP](https://github.com/ZebinHe/MaterialMVP/).
 
-
 ## Quick Inference
+
 You need to manually download the RealESRGAN weight to the `ckpt` folder using the following command:
+
 ```bash
 wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P ckpt
 ```
 
-Given a 3D mesh `mesh.glb` and a reference image `image.png`, you can run inference using the following code. The result will be saved as `textured_mesh.glb`.
+Given a 3D mesh `mesh.glb` and a reference image `image.png`, you can run inference using the following code. The result will be saved as `textured_mesh.glb` when Blender is available, or `textured_mesh.obj` otherwise.
+
+Direct GLB output requires `bpy==4.0`. If Blender is unavailable and you do not explicitly target a `.glb` path, the paint pipeline falls back to OBJ automatically. The bundled demo uses that behavior by default, and you can still pass `save_glb=False` to force OBJ output explicitly.
 
 ```bash
 python3 demo.py
 ```
+
 **Optional arguments in `demo.py`:**
 
 - `max_num_view` : Maximum number of views, adaptively selected by the model (integer between 6 to 9)
@@ -25,6 +29,7 @@ python3 demo.py
 ## Training
 
 ### Data Prepare
+
 We provide a piece of data in `train_examples` for the overfitting training test. The data structure should be organized as follows:
 
 ```
@@ -56,6 +61,7 @@ train_examples/
 ```
 
 Each training example contains:
+
 - **render_tex/**: Multi-view renderings with PBR material properties
   - Main RGB images (`XXX.png`)
   - Albedo maps (`XXX_albedo.png`)
@@ -69,7 +75,6 @@ Each training example contains:
   - Point lighting (`XXX_light_PL.png`)
 
 ### Launch Training
-
 
 ```bash
 python3 train.py --base 'cfgs/hunyuan-paint-pbr.yaml' --name overfit --logdir logs/

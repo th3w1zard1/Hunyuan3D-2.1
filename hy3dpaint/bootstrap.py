@@ -5,6 +5,9 @@ import subprocess
 import sysconfig
 from pathlib import Path
 
+from packaging.tags import Tag, sys_tags
+from packaging.utils import parse_wheel_filename
+
 
 def _log(level: str, message: str, *args, logger=None) -> None:
     rendered = message % args if args else message
@@ -51,6 +54,55 @@ def apply_torchvision_compatibility_fix(logger=None) -> bool:
         return False
 
 
+def _custom_rasterizer_wheel_is_compatible(
+    wheel_path: Path, supported_tags: set[Tag] | None = None
+) -> bool:
+    _, _, _, wheel_tags = parse_wheel_filename(wheel_path.name)
+    runtime_tags = supported_tags if supported_tags is not None else set(sys_tags())
+    return any(tag in wheel_tags for tag in runtime_tags)
+
+
+def _resolve_custom_rasterizer_install_target(
+    project_root: Path, supported_tags: set[Tag] | None = None, logger=None
+) -> str:
+    wheel_path = project_root / "custom_rasterizer-0.1-cp310-cp310-linux_x86_64.whl"
+    source_package = project_root / "hy3dpaint" / "packages" / "custom_rasterizer"
+
+    if wheel_path.exists() and _custom_rasterizer_wheel_is_compatible(
+        wheel_path, supported_tags=supported_tags
+    ):
+        _log(
+            "info",
+            "Installing custom_rasterizer wheel from %s",
+            wheel_path,
+            logger=logger,
+        )
+        return str(wheel_path)
+
+    if source_package.exists():
+        if wheel_path.exists():
+            _log(
+                "info",
+                "Bundled custom_rasterizer wheel at %s is incompatible with this interpreter; building from source package at %s",
+                wheel_path,
+                source_package,
+                logger=logger,
+            )
+        else:
+            _log(
+                "info",
+                "Bundled custom_rasterizer wheel missing; building from source package at %s",
+                source_package,
+                logger=logger,
+            )
+        return str(source_package)
+
+    raise FileNotFoundError(
+        "Missing compatible custom_rasterizer install target. "
+        f"Checked wheel {wheel_path} and source package {source_package}."
+    )
+
+
 def _ensure_custom_rasterizer(
     project_root: Path, python_executable: str, logger=None
 ) -> None:
@@ -66,29 +118,9 @@ def _ensure_custom_rasterizer(
     except ImportError:
         pass
 
-    wheel_path = project_root / "custom_rasterizer-0.1-cp310-cp310-linux_x86_64.whl"
-    source_package = project_root / "hy3dpaint" / "packages" / "custom_rasterizer"
-
-    if wheel_path.exists():
-        install_target = str(wheel_path)
-        _log(
-            "info",
-            "Installing custom_rasterizer wheel from %s",
-            wheel_path,
-            logger=logger,
-        )
-    elif source_package.exists():
-        install_target = str(source_package)
-        _log(
-            "info",
-            "Bundled custom_rasterizer wheel missing; building from source package at %s",
-            source_package,
-            logger=logger,
-        )
-    else:
-        raise FileNotFoundError(
-            f"Missing custom_rasterizer install target. Checked {wheel_path} and {source_package}."
-        )
+    install_target = _resolve_custom_rasterizer_install_target(
+        project_root, logger=logger
+    )
 
     subprocess.run(
         [python_executable, "-m", "pip", "install", install_target], check=True
