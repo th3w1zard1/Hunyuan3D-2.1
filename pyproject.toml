@@ -32,7 +32,7 @@ dependencies = [
     "psutil==6.0.0",
     "pydantic==2.10.6",
     "pygltflib==1.16.3",
-    "pymeshlab==2022.2.post3",
+    "pymeshlab==2025.7.post1",
     "pythreejs>=2.4,<3",
     "pyyaml==6.0.2",
     "realesrgan==0.3.0",

@@ -6,7 +6,7 @@ transformers==4.46.0
 omegaconf==2.3.0
 tqdm==4.66.5
 trimesh==4.4.7
-pymeshlab==2022.2.post3
+pymeshlab==2025.7.post1
 pygltflib==1.16.3
 xatlas==0.0.9
 accelerate==1.1.1
