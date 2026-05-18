@@ -112,7 +112,6 @@ def test_gradio_runtime_floor_matches_space_runtime_contract():
 def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_path():
     space_requirements = _read_lines("requirements/space.txt")
 
-    assert "--extra-index-url https://download.pytorch.org/whl/cpu" in space_requirements
     assert "opencv-python-headless>=4.11.0.86" in space_requirements
     assert "-r build.txt" not in space_requirements
     assert not any(line.startswith("basicsr") for line in space_requirements)
@@ -130,11 +129,7 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     assert not any(line.startswith("rembg") for line in space_requirements)
     assert not any(line.startswith("torchaudio") for line in space_requirements)
     assert not any(line.startswith("xatlas") for line in space_requirements)
-    assert not any(
-        line.startswith("--extra-index-url")
-        and line != "--extra-index-url https://download.pytorch.org/whl/cpu"
-        for line in space_requirements
-    )
+    assert not any(line.startswith("--extra-index-url") for line in space_requirements)
     assert not any("==" in line for line in space_requirements)
 
 

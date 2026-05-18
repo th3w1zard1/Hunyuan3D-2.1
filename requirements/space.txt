@@ -1,11 +1,10 @@
 # Hugging Face Spaces inject gradio, spaces, uvicorn, websockets, and a torch upper bound.
 # Keep the Space-specific requirements focused on the serving/runtime slice to avoid
 # resolver conflicts with platform-managed packages and unnecessary optional extras.
-# The managed Gradio builder fails when it resolves the default Linux CUDA torch
-# wheels, so use the PyTorch CPU index for the Space runtime.
+# ZeroGPU startup depends on CUDA-backed torch internals during `import spaces`,
+# so do not force the CPU-only PyTorch wheel index here.
 # Keep Space-only startup trimmed to the default shape path; optional texture and
 # heavy mesh-cleanup tooling is loaded lazily or skipped in fallback mode.
---extra-index-url https://download.pytorch.org/whl/cpu
 
 accelerate>=1.1.1
 diffusers>=0.30.0
