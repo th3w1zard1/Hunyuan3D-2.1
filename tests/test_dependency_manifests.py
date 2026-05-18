@@ -126,7 +126,7 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
 
 
 def test_space_builder_system_packages_stay_empty_for_shape_only_runtime():
-    assert _read_lines("packages.txt") == []
+    assert not (PROJECT_ROOT / "packages.txt").exists()
 
 
 def test_runtime_manifests_avoid_exact_dependency_pins():
