@@ -1,47 +1,47 @@
 name: Deploy GitHub Pages
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+    workflow_dispatch:
+    push:
+        branches:
+            - main
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+    contents: read
+    pages: write
+    id-token: write
 
 concurrency:
-  group: github-pages
-  cancel-in-progress: true
+    group: github-pages
+    cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Stage GitHub Pages artifact
-        run: |
-          rm -rf _site
-          mkdir -p _site/assets/images _site/assets/example_images
-          cp docs/index.html _site/index.html
-          cp assets/images/teaser.jpg _site/assets/images/teaser.jpg
-          cp assets/images/pipeline.png _site/assets/images/pipeline.png
-          cp assets/example_images/jimeng2.png _site/assets/example_images/jimeng2.png
-          cp assets/example_images/jimeng6.png _site/assets/example_images/jimeng6.png
-          cp assets/example_images/qie.png _site/assets/example_images/qie.png
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  lfs: true
+            - name: Stage GitHub Pages artifact
+              run: |
+                  rm -rf _site
+                  mkdir -p _site/assets/images _site/assets/example_images
+                  cp docs/index.html _site/index.html
+                  cp assets/images/teaser.jpg _site/assets/images/teaser.jpg
+                  cp assets/images/pipeline.png _site/assets/images/pipeline.png
+                  cp assets/example_images/jimeng2.png _site/assets/example_images/jimeng2.png
+                  cp assets/example_images/jimeng6.png _site/assets/example_images/jimeng6.png
+                  cp assets/example_images/qie.png _site/assets/example_images/qie.png
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: _site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - id: deployment
+              uses: actions/deploy-pages@v4
