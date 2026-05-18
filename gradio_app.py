@@ -72,15 +72,9 @@ if HF_SPACE and os.getenv("SPACES_ZERO_DEVICE_API_URL") and not os.getenv(
 ):
     os.environ["SPACES_ZERO_GPU"] = "true"
 
-try:
-    import spaces as _spaces_runtime
-except ImportError:
-    if HF_SPACE:
-        raise
-    _spaces_runtime = None
-
-
-if _spaces_runtime is None:
+if HF_SPACE:
+    import spaces
+else:
 
     class spaces:
         class GPU:
@@ -93,8 +87,6 @@ if _spaces_runtime is None:
         @staticmethod
         def is_zerogpu():
             return False
-else:
-    spaces = _spaces_runtime
 
 
 try:
