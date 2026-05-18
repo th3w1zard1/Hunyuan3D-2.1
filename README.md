@@ -11,13 +11,11 @@ startup_duration_timeout: 1h
 models:
   - tencent/Hunyuan3D-2.1
   - facebook/dinov2-giant
-  - stabilityai/stable-diffusion-2-1-base
 
 app_file: gradio_app.py
 preload_from_hub:
   - tencent/Hunyuan3D-2.1
   - facebook/dinov2-giant
-  - stabilityai/stable-diffusion-2-1-base
 pinned: false
 short_description: Image-to-3D Generation
 ---

@@ -5,20 +5,47 @@ import tomllib
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def _read_readme_front_matter() -> dict[str, str]:
+def _read_readme_front_matter_lines() -> list[str]:
     lines = (PROJECT_ROOT / "README.md").read_text().splitlines()
     if not lines or lines[0].strip() != "---":
         raise AssertionError("README.md is missing YAML front matter")
 
-    front_matter: dict[str, str] = {}
+    front_matter_lines: list[str] = []
     for line in lines[1:]:
         if line.strip() == "---":
             break
+        front_matter_lines.append(line.rstrip())
+    return front_matter_lines
+
+
+def _read_readme_front_matter() -> dict[str, str]:
+    front_matter: dict[str, str] = {}
+    for line in _read_readme_front_matter_lines():
         if ":" not in line:
             continue
         key, value = line.split(":", 1)
         front_matter[key.strip()] = value.strip()
     return front_matter
+
+
+def _read_readme_front_matter_list(key: str) -> list[str]:
+    items: list[str] = []
+    in_target_list = False
+
+    for line in _read_readme_front_matter_lines():
+        if not in_target_list:
+            if line.strip() == f"{key}:":
+                in_target_list = True
+            continue
+
+        if line.startswith("  - "):
+            items.append(line.removeprefix("  - ").strip())
+            continue
+
+        if line and not line.startswith(" "):
+            break
+
+    return items
 
 
 def _read_lines(relative_path: str) -> list[str]:
@@ -85,3 +112,11 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     assert not any(line.startswith("pygltflib") for line in space_requirements)
     assert not any(line.startswith("realesrgan") for line in space_requirements)
     assert not any(line.startswith("--extra-index-url") for line in space_requirements)
+
+
+def test_space_preloads_only_public_unauthenticated_hub_repos():
+    preload_repos = _read_readme_front_matter_list("preload_from_hub")
+
+    assert "tencent/Hunyuan3D-2.1" in preload_repos
+    assert "facebook/dinov2-giant" in preload_repos
+    assert "stabilityai/stable-diffusion-2-1-base" not in preload_repos

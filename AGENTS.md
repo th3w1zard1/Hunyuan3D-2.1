@@ -12,4 +12,5 @@
 - Preserve all five runtime profiles when editing startup logic: local GPU, local CPU, HF GPU, HF CPU, and HF ZeroGPU. Shape generation and export must remain available even when texture generation is disabled by fallback.
 - Keep ZeroGPU on the Gradio SDK path and preserve `@spaces.GPU` on GPU-dependent functions.
 - Surface the active runtime mode in user-visible output or stats whenever you change runtime-selection behavior.
+- Keep `README.md` `preload_from_hub` entries limited to repos that a public, unauthenticated Space build can fetch. Do not add gated or token-protected repos there unless the Space build is explicitly provisioned for that access path.
 - Never print or commit tokens, credentials, or other secrets.
