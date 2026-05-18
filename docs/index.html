@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hunyuan3D-2.1 Demo Hub</title>
+    <meta name="description" content="Project landing page for the Hunyuan3D-2.1 GitHub Pages deployment.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4efe5;
+            --bg-strong: #e6dcc7;
+            --ink: #1f2933;
+            --muted: #52606d;
+            --accent: #0d9488;
+            --accent-strong: #0f766e;
+            --panel: rgba(255, 252, 245, 0.92);
+            --line: rgba(31, 41, 51, 0.12);
+            --shadow: 0 24px 60px rgba(31, 41, 51, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "IBM Plex Sans", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(13, 148, 136, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 24%),
+                linear-gradient(180deg, var(--bg) 0%, #fbf8f1 100%);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .shell {
+            width: min(1120px, calc(100vw - 32px));
+            margin: 0 auto;
+            padding: 32px 0 64px;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+            gap: 24px;
+            padding: 32px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -80px -80px auto;
+            width: 220px;
+            height: 220px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.12);
+            filter: blur(4px);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(13, 148, 136, 0.12);
+            color: var(--accent-strong);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            letter-spacing: -0.03em;
+        }
+
+        h1 {
+            font-size: clamp(40px, 6vw, 68px);
+            line-height: 0.95;
+            margin-bottom: 16px;
+        }
+
+        .lede {
+            max-width: 60ch;
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 18px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button-primary {
+            background: var(--accent-strong);
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(15, 118, 110, 0.22);
+        }
+
+        .button-secondary {
+            border-color: var(--line);
+            background: rgba(255, 255, 255, 0.78);
+        }
+
+        .hero-panel,
+        .section,
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.78);
+        }
+
+        .hero-panel {
+            display: grid;
+            gap: 16px;
+            padding: 18px;
+            align-content: start;
+        }
+
+        .hero-panel img {
+            width: 100%;
+            border-radius: 18px;
+            display: block;
+        }
+
+        .panel-label {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            gap: 18px;
+            margin-top: 24px;
+        }
+
+        .grid-two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid-three {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .section {
+            padding: 24px;
+        }
+
+        .section-spaced {
+            margin-top: 24px;
+        }
+
+        .section h2 {
+            margin-bottom: 10px;
+            font-size: 30px;
+        }
+
+        .section-copy {
+            margin: 0 0 18px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .card {
+            padding: 18px;
+            box-shadow: 0 16px 36px rgba(31, 41, 51, 0.06);
+        }
+
+        .card h3 {
+            margin-bottom: 8px;
+            font-size: 22px;
+        }
+
+        .card p,
+        .card li {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .example-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 18px;
+            display: block;
+            margin-bottom: 14px;
+        }
+
+        .prompt {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(13, 148, 136, 0.08);
+            color: var(--ink);
+            font-size: 15px;
+        }
+
+        .checklist {
+            padding-left: 18px;
+            margin: 0;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .tag {
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: rgba(31, 41, 51, 0.07);
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        footer {
+            margin-top: 24px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .hero,
+            .grid-two,
+            .grid-three {
+                grid-template-columns: 1fr;
+            }
+
+            .shell {
+                width: min(100vw - 20px, 1120px);
+                padding-top: 20px;
+            }
+
+            .hero,
+            .section,
+            .card {
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <section class="hero">
+        <div>
+            <div class="eyebrow">GitHub Pages deployment for Hunyuan3D-2.1</div>
+            <h1>Ship the repo, test the examples, verify the public demo.</h1>
+            <p class="lede">
+                This project page mirrors the operator validation flow for the public Hugging Face Space.
+                Use the sample inputs below to smoke-test the browser experience, then run the live generation,
+                export, and download checks in the Space.
+            </p>
+            <div class="button-row">
+                <a class="button button-primary" href="https://huggingface.co/spaces/th3w1zard1/Hunyuan3D-2.1" target="_blank" rel="noopener noreferrer">Open Hugging Face Space</a>
+                <a class="button button-secondary" href="https://github.com/th3w1zard1/Hunyuan3D-2.1" target="_blank" rel="noopener noreferrer">View GitHub Repository</a>
+                <a class="button button-secondary" href="https://3d-models.hunyuan.tencent.com/" target="_blank" rel="noopener noreferrer">Open Official Project Page</a>
+            </div>
+            <div class="meta">
+                <span class="tag">Shape-first validation</span>
+                <span class="tag">HF Space smoke tests</span>
+                <span class="tag">Static Pages artifact</span>
+            </div>
+        </div>
+        <aside class="hero-panel">
+            <div class="panel-label">Reference visuals</div>
+            <img src="assets/images/teaser.jpg" alt="Hunyuan3D-2.1 teaser montage">
+            <img src="assets/images/pipeline.png" alt="Hunyuan3D-2.1 pipeline overview">
+        </aside>
+    </section>
+
+    <div class="grid grid-two">
+        <section class="section">
+            <h2>Public Checks</h2>
+            <p class="section-copy">These are the browser-visible checks this project page is meant to support.</p>
+            <ul class="checklist">
+                <li>GitHub Pages must load without a 404 and render the example gallery.</li>
+                <li>The Hugging Face Space must leave build error state and load the Gradio UI.</li>
+                <li>The Space must accept sample inputs, generate a mesh, and keep export plus download working.</li>
+                <li>The operator can cross-check the exact sample image used for the live smoke test.</li>
+            </ul>
+        </section>
+        <section class="section">
+            <h2>Validation Assets</h2>
+            <p class="section-copy">Use the same checked-in examples during browser validation to keep the result reproducible.</p>
+            <div class="button-row">
+                <a class="button button-secondary" href="assets/example_images/jimeng2.png" target="_blank" rel="noopener noreferrer">Open jimeng2.png</a>
+                <a class="button button-secondary" href="assets/example_images/jimeng6.png" target="_blank" rel="noopener noreferrer">Open jimeng6.png</a>
+                <a class="button button-secondary" href="assets/example_images/qie.png" target="_blank" rel="noopener noreferrer">Open qie.png</a>
+            </div>
+        </section>
+    </div>
+
+    <section class="section section-spaced">
+        <h2>Example Inputs</h2>
+        <p class="section-copy">
+            The image samples below come from the repository and are paired with prompts from the project examples.
+            They provide a quick browser-level sanity check for the static Pages site before switching to the live Space.
+        </p>
+        <div class="grid grid-three">
+            <article class="card">
+                <img class="example-image" src="assets/example_images/jimeng2.png" alt="jimeng2 example input">
+                <h3>Leaf</h3>
+                <p class="prompt">一片绿色的树叶在白色背景上居中展现，清晰的纹理</p>
+            </article>
+            <article class="card">
+                <img class="example-image" src="assets/example_images/jimeng6.png" alt="jimeng6 example input">
+                <h3>Rabbit</h3>
+                <p class="prompt">a lovely rabbit eating carrots</p>
+            </article>
+            <article class="card">
+                <img class="example-image" src="assets/example_images/qie.png" alt="qie example input">
+                <h3>Plant</h3>
+                <p class="prompt">a pot of green plants grows in a red flower pot.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="section section-spaced">
+        <h2>Operator Notes</h2>
+        <p class="section-copy">
+            The repository remains the source of truth. GitHub Pages is a lightweight public landing page; the live inference path stays on Hugging Face Spaces.
+            When the Space runtime changes, validate generate, export, and download again with <strong>jimeng2.png</strong> after the rebuild completes.
+        </p>
+        <div class="button-row">
+            <a class="button button-secondary" href="https://github.com/th3w1zard1/Hunyuan3D-2.1/blob/main/docs/SPACE_DEPLOYMENT.md" target="_blank" rel="noopener noreferrer">Space Deployment Guide</a>
+            <a class="button button-secondary" href="https://github.com/th3w1zard1/Hunyuan3D-2.1/blob/main/docs/ENVIRONMENT.md" target="_blank" rel="noopener noreferrer">Environment Notes</a>
+        </div>
+    </section>
+
+    <footer>
+        Hunyuan3D-2.1 project page. Static content is published from the repository and validated alongside the public Hugging Face Space.
+    </footer>
+</div>
+</body>
+</html>

@@ -90,7 +90,7 @@ def test_glb_extra_declares_blender_dependency():
     assert pyproject["project"]["optional-dependencies"]["glb"] == ["bpy>=4.0"]
 
 
-def test_gradio_runtime_pin_matches_space_runtime_contract():
+def test_gradio_runtime_floor_matches_space_runtime_contract():
     pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
     dependencies = pyproject["project"]["dependencies"]
     space_requirements = _read_lines("requirements/space.txt")
@@ -109,13 +109,26 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     assert "-r build.txt" not in space_requirements
     assert not any(line.startswith("basicsr") for line in space_requirements)
     assert not any(line.startswith("bpy") for line in space_requirements)
-    assert not any(line.startswith("opencv-python>=") for line in space_requirements)
+    assert not any(line.startswith("opencv-python==") for line in space_requirements)
     assert not any(line.startswith("open3d") for line in space_requirements)
     assert not any(line.startswith("pygltflib") for line in space_requirements)
     assert not any(line.startswith("pythreejs") for line in space_requirements)
     assert not any(line.startswith("realesrgan") for line in space_requirements)
     assert not any(line.startswith("torchaudio") for line in space_requirements)
     assert not any(line.startswith("--extra-index-url") for line in space_requirements)
+    assert not any("==" in line for line in space_requirements)
+
+
+def test_runtime_manifests_avoid_exact_dependency_pins():
+    pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
+    dependency_groups = [pyproject["project"]["dependencies"]]
+    dependency_groups.extend(pyproject["project"]["optional-dependencies"].values())
+
+    for dependency_group in dependency_groups:
+        assert not any("==" in spec for spec in dependency_group)
+
+    assert not any("==" in line for line in _read_lines("requirements/base.txt"))
+    assert not any("==" in line for line in _read_lines("requirements/space.txt"))
 
 
 def test_space_preloads_only_public_unauthenticated_hub_repos():
