@@ -1136,7 +1136,7 @@ if __name__ == "__main__":
         torch.cuda.empty_cache()
 
     demo = build_app()
-    app = gr.mount_gradio_app(app, demo, path="/")
+    app = gr.mount_gradio_app(app, demo, path="/", ssr_mode=False)
 
     if ZERO_GPU_STARTUP_ENABLED:
         # Mounted Gradio apps do not go through Blocks.launch, so trigger the
