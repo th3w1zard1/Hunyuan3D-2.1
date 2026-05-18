@@ -72,6 +72,10 @@ if HF_SPACE and os.getenv("SPACES_ZERO_DEVICE_API_URL") and not os.getenv(
 ):
     os.environ["SPACES_ZERO_GPU"] = "true"
 
+ZERO_GPU_STARTUP_ENABLED = HF_SPACE and bool(
+    os.getenv("SPACES_ZERO_GPU") or os.getenv("SPACES_ZERO_DEVICE_API_URL")
+)
+
 if HF_SPACE:
     import spaces
 else:
@@ -1134,8 +1138,9 @@ if __name__ == "__main__":
     demo = build_app()
     app = gr.mount_gradio_app(app, demo, path="/")
 
-    if RUNTIME_PROFILE.is_zerogpu:
-        # for Zerogpu
+    if ZERO_GPU_STARTUP_ENABLED:
+        # Mounted Gradio apps do not go through Blocks.launch, so trigger the
+        # ZeroGPU startup report explicitly when the platform exposes ZeroGPU envs.
         from spaces import zero
 
         zero.startup()
