@@ -12,6 +12,40 @@
 # fine-tuning enabling code and other elements of the foregoing made publicly available
 # by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
 
-from .pipelines import Hunyuan3DDiTPipeline, Hunyuan3DDiTFlowMatchingPipeline
-from .postprocessors import FaceReducer, FloaterRemover, DegenerateFaceRemover, MeshSimplifier
-from .preprocessors import ImageProcessorV2, IMAGE_PROCESSORS, DEFAULT_IMAGEPROCESSOR
+from .pipelines import Hunyuan3DDiTPipeline as Hunyuan3DDiTPipeline
+from .pipelines import (
+	Hunyuan3DDiTFlowMatchingPipeline as Hunyuan3DDiTFlowMatchingPipeline,
+)
+from .preprocessors import DEFAULT_IMAGEPROCESSOR as DEFAULT_IMAGEPROCESSOR
+from .preprocessors import IMAGE_PROCESSORS as IMAGE_PROCESSORS
+from .preprocessors import ImageProcessorV2 as ImageProcessorV2
+
+
+def _missing_optional_postprocessor(name, error):
+	class MissingOptionalPostprocessor:
+		def __init__(self, *args, **kwargs):
+			raise ModuleNotFoundError(
+				f"pymeshlab is required to use {name}. Install the full mesh post-processing runtime."
+			) from error
+
+	MissingOptionalPostprocessor.__name__ = name
+	return MissingOptionalPostprocessor
+
+
+try:
+	from .postprocessors import (  # type: ignore[assignment]
+		FaceReducer as FaceReducer,
+		FloaterRemover as FloaterRemover,
+		DegenerateFaceRemover as DegenerateFaceRemover,
+		MeshSimplifier as MeshSimplifier,
+	)
+except ModuleNotFoundError as error:
+	if getattr(error, "name", None) != "pymeshlab":
+		raise
+
+	FaceReducer = _missing_optional_postprocessor("FaceReducer", error)
+	FloaterRemover = _missing_optional_postprocessor("FloaterRemover", error)
+	DegenerateFaceRemover = _missing_optional_postprocessor(
+		"DegenerateFaceRemover", error
+	)
+	MeshSimplifier = _missing_optional_postprocessor("MeshSimplifier", error)

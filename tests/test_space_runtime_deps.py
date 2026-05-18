@@ -1,4 +1,7 @@
-from types import SimpleNamespace
+import builtins
+import importlib
+import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -155,3 +158,48 @@ def test_load_shape_runtime_components_reraises_other_import_errors(monkeypatch)
 
     with pytest.raises(ModuleNotFoundError, match="yaml"):
         space_runtime_deps.load_shape_runtime_components()
+
+
+def test_inner_hy3dshape_package_keeps_pipeline_exports_importable_without_pymeshlab(
+    monkeypatch,
+):
+    real_import = builtins.__import__
+    pipeline_class = type("Pipeline", (), {})
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "pymeshlab":
+            error = ModuleNotFoundError("No module named 'pymeshlab'")
+            error.name = "pymeshlab"
+            raise error
+        return real_import(name, globals, locals, fromlist, level)
+
+    fake_pipelines = ModuleType("hy3dshape.hy3dshape.pipelines")
+    fake_pipelines.Hunyuan3DDiTPipeline = type("BasePipeline", (), {})
+    fake_pipelines.Hunyuan3DDiTFlowMatchingPipeline = pipeline_class
+
+    fake_preprocessors = ModuleType("hy3dshape.hy3dshape.preprocessors")
+    fake_preprocessors.ImageProcessorV2 = type("ImageProcessorV2", (), {})
+    fake_preprocessors.IMAGE_PROCESSORS = {}
+    fake_preprocessors.DEFAULT_IMAGEPROCESSOR = "default"
+
+    for module_name in [
+        "hy3dshape.hy3dshape",
+        "hy3dshape.hy3dshape.pipelines",
+        "hy3dshape.hy3dshape.preprocessors",
+        "hy3dshape.hy3dshape.postprocessors",
+    ]:
+        monkeypatch.delitem(sys.modules, module_name, raising=False)
+
+    monkeypatch.setitem(sys.modules, "hy3dshape.hy3dshape.pipelines", fake_pipelines)
+    monkeypatch.setitem(
+        sys.modules,
+        "hy3dshape.hy3dshape.preprocessors",
+        fake_preprocessors,
+    )
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    module = importlib.import_module("hy3dshape.hy3dshape")
+
+    assert module.Hunyuan3DDiTFlowMatchingPipeline is pipeline_class
+    with pytest.raises(ModuleNotFoundError, match="pymeshlab"):
+        module.FaceReducer()
