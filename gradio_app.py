@@ -41,8 +41,6 @@ import uvicorn  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from hy3dshape.utils import logger  # noqa: E402
-
-from hy3dpaint.convert_utils import create_glb_with_pbr_materials  # noqa: E402
 from hy3dpaint.runtime_profile import (  # noqa: E402
     format_runtime_profile,
     get_runtime_notice,
@@ -92,7 +90,9 @@ else:
 
 
 try:
-    IS_ZEROGPU = bool(HF_SPACE and hasattr(spaces, "is_zerogpu") and spaces.is_zerogpu())
+    IS_ZEROGPU = bool(
+        HF_SPACE and hasattr(spaces, "is_zerogpu") and spaces.is_zerogpu()
+    )
 except Exception:
     IS_ZEROGPU = False
 
@@ -202,6 +202,14 @@ def export_mesh(mesh, save_folder, textured=False, type="glb"):
 
 
 def quick_convert_with_obj2gltf(obj_path: str, glb_path: str) -> bool:
+    try:
+        from hy3dpaint.convert_utils import create_glb_with_pbr_materials
+    except ImportError as error:
+        raise RuntimeError(
+            "pygltflib is required for textured GLB conversion. "
+            "Install the full texture runtime or export OBJ instead."
+        ) from error
+
     # 执行转换
     textures = {
         "albedo": obj_path.replace(".obj", ".jpg"),
@@ -268,7 +276,9 @@ def _enable_runtime_cpu_offload(shape_worker, texture_worker=None):
 
     multiview_model = texture_worker.models.get("multiview_model")
     diffusers_pipeline = getattr(multiview_model, "pipeline", None)
-    if diffusers_pipeline is None or not hasattr(diffusers_pipeline, "enable_model_cpu_offload"):
+    if diffusers_pipeline is None or not hasattr(
+        diffusers_pipeline, "enable_model_cpu_offload"
+    ):
         return
 
     try:

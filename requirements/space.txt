@@ -7,7 +7,6 @@
 pybind11==2.13.4
 
 accelerate==1.1.1
-basicsr==1.4.2
 configargparse==1.7
 diffusers==0.30.0
 einops==0.8.0
@@ -16,17 +15,14 @@ imageio==2.36.0
 numpy==1.24.4
 omegaconf==2.3.0
 onnxruntime==1.16.3
-open3d==0.18.0
 opencv-python==4.10.0.84
 pandas==2.2.2
 packaging>=24,<26
 pillow>=10,<12
 psutil==6.0.0
-pygltflib==1.16.3
 pymeshlab==2022.2.post3
 pythreejs>=2.4,<3
 pyyaml==6.0.2
-realesrgan==0.3.0
 rembg==2.0.65
 safetensors==0.4.4
 scikit-image==0.24.0

@@ -79,5 +79,9 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
 
     assert "pybind11==2.13.4" in space_requirements
     assert "-r build.txt" not in space_requirements
+    assert not any(line.startswith("basicsr") for line in space_requirements)
     assert not any(line.startswith("bpy") for line in space_requirements)
+    assert not any(line.startswith("open3d") for line in space_requirements)
+    assert not any(line.startswith("pygltflib") for line in space_requirements)
+    assert not any(line.startswith("realesrgan") for line in space_requirements)
     assert not any(line.startswith("--extra-index-url") for line in space_requirements)
