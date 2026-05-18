@@ -67,6 +67,11 @@ def _cli_flag_present(flag):
 
 HF_SPACE = _running_in_huggingface_space()
 
+if HF_SPACE and os.getenv("SPACES_ZERO_DEVICE_API_URL") and not os.getenv(
+    "SPACES_ZERO_GPU"
+):
+    os.environ["SPACES_ZERO_GPU"] = "true"
+
 try:
     import spaces as _spaces_runtime
 except ImportError:
