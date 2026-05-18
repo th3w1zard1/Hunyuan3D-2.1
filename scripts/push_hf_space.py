@@ -61,8 +61,13 @@ def _get_authenticated_hf_user(cli_bin: str) -> str:
         text=True,
     )
     for line in result.stdout.splitlines():
-        if line.lower().startswith("user:"):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.lower().startswith("user:"):
             return line.split(":", 1)[1].strip()
+        if not stripped.lower().startswith("orgs:"):
+            return stripped
     raise RuntimeError("Unable to resolve authenticated Hugging Face user from `hf auth whoami`.")
 
 
