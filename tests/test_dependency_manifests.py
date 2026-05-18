@@ -61,6 +61,7 @@ def test_pillow_is_declared_in_root_runtime_manifests():
     dependencies = pyproject["project"]["dependencies"]
 
     assert "pillow>=10,<12" in dependencies
+    assert "pillow>=10,<12" in _read_lines("requirements.txt")
     assert "pillow>=10,<12" in _read_lines("requirements/base.txt")
     assert "pillow>=10,<12" in _read_lines("requirements/space.txt")
 
@@ -70,6 +71,7 @@ def test_packaging_is_declared_in_root_runtime_manifests():
     dependencies = pyproject["project"]["dependencies"]
 
     assert "packaging>=24,<26" in dependencies
+    assert "packaging>=24,<26" in _read_lines("requirements.txt")
     assert "packaging>=24,<26" in _read_lines("requirements/base.txt")
     assert "packaging>=24,<26" in _read_lines("requirements/space.txt")
 
@@ -136,6 +138,14 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     assert not any("==" in line for line in space_requirements)
 
 
+def test_root_requirements_are_standalone_and_match_space_manifest():
+    root_requirements = _read_lines("requirements.txt")
+    space_requirements = _read_lines("requirements/space.txt")
+
+    assert not any(line.startswith("-r") for line in root_requirements)
+    assert root_requirements == space_requirements
+
+
 def test_space_builder_system_packages_stay_empty_for_shape_only_runtime():
     assert not (PROJECT_ROOT / "packages.txt").exists()
 
@@ -148,6 +158,7 @@ def test_runtime_manifests_avoid_exact_dependency_pins():
     for dependency_group in dependency_groups:
         assert not any("==" in spec for spec in dependency_group)
 
+    assert not any("==" in line for line in _read_lines("requirements.txt"))
     assert not any("==" in line for line in _read_lines("requirements/base.txt"))
     assert not any("==" in line for line in _read_lines("requirements/space.txt"))
 
