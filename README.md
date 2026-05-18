@@ -5,7 +5,7 @@ colorFrom: red
 colorTo: green
 sdk: gradio
 sdk_version: 5.33.0
-python_version: 3.10.13
+python_version: 3.12.12
 suggested_hardware: l40sx1
 startup_duration_timeout: 1h
 models:

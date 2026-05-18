@@ -84,6 +84,12 @@ def test_requires_python_matches_runtime_support_envelope():
     assert pyproject["project"]["requires-python"] == ">=3.10,<3.14"
 
 
+def test_space_python_version_uses_supported_zero_gpu_runtime():
+    front_matter = _read_readme_front_matter()
+
+    assert front_matter["python_version"] == "3.12.12"
+
+
 def test_glb_extra_declares_blender_dependency():
     pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
 
