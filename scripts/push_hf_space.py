@@ -3,7 +3,13 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from hy3dpaint.hf_space_push import (
     build_git_push_command,
@@ -14,9 +20,6 @@ from hy3dpaint.hf_space_push import (
     resolve_space_config,
 )
 from scripts.ensure_hf_space import main as ensure_hf_space_main
-
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _run(command: list[str], cwd: Path | None = None) -> None:
