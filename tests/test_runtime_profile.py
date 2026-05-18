@@ -119,7 +119,9 @@ def test_requested_cuda_falls_back_to_cpu_when_cuda_is_unavailable():
     assert profile.disable_tex is True
 
 
-def test_paint_config_defaults_to_primary_device_when_texture_override_is_unset(monkeypatch):
+def test_paint_config_defaults_to_primary_device_when_texture_override_is_unset(
+    monkeypatch,
+):
     monkeypatch.delenv("HY3D_TEX_DEVICE", raising=False)
     monkeypatch.setenv("HY3D_DEVICE", "cpu")
 

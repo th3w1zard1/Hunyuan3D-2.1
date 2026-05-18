@@ -65,7 +65,9 @@ def resolve_runtime_profile(
     elif in_huggingface_space and not full_texture:
         default_device = "cpu"
 
-    requested_device = env.get("HY3D_DEVICE", default_device).strip().lower() or default_device
+    requested_device = (
+        env.get("HY3D_DEVICE", default_device).strip().lower() or default_device
+    )
     device = requested_device
     if device == "cuda" and not has_cuda:
         device = "cpu"

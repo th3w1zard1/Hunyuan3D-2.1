@@ -87,7 +87,7 @@ def test_requires_python_matches_runtime_support_envelope():
 def test_glb_extra_declares_blender_dependency():
     pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
 
-    assert pyproject["project"]["optional-dependencies"]["glb"] == ["bpy==4.0"]
+    assert pyproject["project"]["optional-dependencies"]["glb"] == ["bpy>=4.0"]
 
 
 def test_gradio_runtime_pin_matches_space_runtime_contract():
@@ -96,21 +96,25 @@ def test_gradio_runtime_pin_matches_space_runtime_contract():
     space_requirements = _read_lines("requirements/space.txt")
     sdk_version = _read_readme_front_matter()["sdk_version"]
 
-    assert f"gradio=={sdk_version}" in dependencies
-    assert f"gradio=={sdk_version}" in _read_lines("requirements/base.txt")
+    assert f"gradio>={sdk_version}" in dependencies
+    assert f"gradio>={sdk_version}" in _read_lines("requirements/base.txt")
     assert not any(line.startswith("gradio") for line in space_requirements)
 
 
 def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_path():
     space_requirements = _read_lines("requirements/space.txt")
 
-    assert "pybind11==2.13.4" in space_requirements
+    assert "pybind11>=2.13.4" in space_requirements
+    assert "opencv-python-headless>=4.11.0.86" in space_requirements
     assert "-r build.txt" not in space_requirements
     assert not any(line.startswith("basicsr") for line in space_requirements)
     assert not any(line.startswith("bpy") for line in space_requirements)
+    assert not any(line.startswith("opencv-python>=") for line in space_requirements)
     assert not any(line.startswith("open3d") for line in space_requirements)
     assert not any(line.startswith("pygltflib") for line in space_requirements)
+    assert not any(line.startswith("pythreejs") for line in space_requirements)
     assert not any(line.startswith("realesrgan") for line in space_requirements)
+    assert not any(line.startswith("torchaudio") for line in space_requirements)
     assert not any(line.startswith("--extra-index-url") for line in space_requirements)
 
 
