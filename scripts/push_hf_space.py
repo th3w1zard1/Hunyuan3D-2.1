@@ -11,15 +11,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from hy3dpaint.hf_space_push import (
-    build_git_push_command,
-    build_hf_auth_login_command,
-    build_hf_auth_whoami_command,
-    build_space_remote_url,
-    resolve_cli_bin,
-    resolve_space_config,
-)
-from scripts.ensure_hf_space import main as ensure_hf_space_main
+
+def _hf_space_push_module():
+    from hy3dpaint import hf_space_push
+
+    return hf_space_push
+
+
+def _ensure_hf_space_main():
+    from scripts.ensure_hf_space import main as ensure_hf_space_main
+
+    return ensure_hf_space_main
 
 
 def _run(command: list[str], cwd: Path | None = None) -> None:
@@ -32,15 +34,17 @@ def _ensure_command(name: str) -> None:
 
 
 def _ensure_hf_auth(cli_bin: str, token: str | None) -> None:
+    hf_space_push = _hf_space_push_module()
+
     try:
-        _run(build_hf_auth_whoami_command(cli_bin))
+        _run(hf_space_push.build_hf_auth_whoami_command(cli_bin))
         return
     except subprocess.CalledProcessError:
         pass
 
     if token:
         try:
-            _run(build_hf_auth_login_command(cli_bin, token))
+            _run(hf_space_push.build_hf_auth_login_command(cli_bin, token))
             return
         except subprocess.CalledProcessError as error:
             raise RuntimeError(
@@ -54,8 +58,10 @@ def _ensure_hf_auth(cli_bin: str, token: str | None) -> None:
 
 
 def _get_authenticated_hf_user(cli_bin: str) -> str:
+    hf_space_push = _hf_space_push_module()
+
     result = subprocess.run(
-        build_hf_auth_whoami_command(cli_bin),
+        hf_space_push.build_hf_auth_whoami_command(cli_bin),
         check=True,
         capture_output=True,
         text=True,
@@ -89,8 +95,11 @@ def _configure_remote(remote_name: str, remote_url: str) -> None:
 
 
 def main() -> int:
+    hf_space_push = _hf_space_push_module()
+    ensure_hf_space_main = _ensure_hf_space_main()
+
     env = os.environ.copy()
-    cli_bin = resolve_cli_bin(env)
+    cli_bin = hf_space_push.resolve_cli_bin(env)
     remote_name = env.get("HF_SPACE_REMOTE_NAME", "space")
     branch = env.get("HF_SPACE_REMOTE_BRANCH", "main")
 
@@ -98,7 +107,7 @@ def main() -> int:
     _ensure_command(cli_bin)
     _ensure_hf_auth(cli_bin, env.get("HF_TOKEN"))
     fallback_namespace = _get_authenticated_hf_user(cli_bin)
-    config = resolve_space_config(
+    config = hf_space_push.resolve_space_config(
         env,
         cwd=PROJECT_ROOT.name,
         fallback_namespace=fallback_namespace,
@@ -111,9 +120,9 @@ def main() -> int:
     ensure_hf_space_main()
 
     _run(["git", "lfs", "install", "--local"], cwd=PROJECT_ROOT)
-    remote_url = build_space_remote_url(config.repo_id)
+    remote_url = hf_space_push.build_space_remote_url(config.repo_id)
     _configure_remote(remote_name, remote_url)
-    _run(build_git_push_command(remote_name, branch), cwd=PROJECT_ROOT)
+    _run(hf_space_push.build_git_push_command(remote_name, branch), cwd=PROJECT_ROOT)
 
     print(f"Pushed current HEAD to {config.repo_id} via remote '{remote_name}'")
     return 0
