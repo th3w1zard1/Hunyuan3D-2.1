@@ -43,9 +43,12 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from hy3dshape.utils import logger  # noqa: E402
 from hy3dpaint.runtime_profile import (  # noqa: E402
+    default_shape_model_path,
     format_runtime_profile,
     get_runtime_notice,
     resolve_runtime_profile,
+    resolve_shape_model_selection,
+    resolve_shape_subfolder,
     should_use_spaces_gpu,
     zero_gpu_startup_enabled,
 )
@@ -961,16 +964,21 @@ Fast for very complex cases, Standard seldom use.",
 if __name__ == "__main__":
     import argparse
 
+    default_model_path, default_subfolder = resolve_shape_model_selection(
+        RUNTIME_PROFILE,
+        env=os.environ,
+    )
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model_path",
         type=str,
-        default=os.getenv("HY3D_MODEL_PATH", "tencent/Hunyuan3D-2.1"),
+        default=default_model_path,
     )
     parser.add_argument(
         "--subfolder",
         type=str,
-        default=os.getenv("HY3D_SHAPE_SUBFOLDER", "hunyuan3d-dit-v2-1"),
+        default=default_subfolder,
     )
     parser.add_argument(
         "--texgen_model_path",
@@ -999,6 +1007,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     args.enable_flashvdm = False
+    model_path_overridden = _cli_flag_present("--model_path") or (
+        os.getenv("HY3D_MODEL_PATH") is not None
+    )
+    subfolder_overridden = _cli_flag_present("--subfolder") or (
+        os.getenv("HY3D_SHAPE_SUBFOLDER") is not None
+    )
 
     if args.device == "cuda" and not torch.cuda.is_available():
         logger.warning(
@@ -1008,12 +1022,23 @@ if __name__ == "__main__":
         args.disable_tex = True
         args.low_vram_mode = True
 
+    if args.device == "cpu" and not model_path_overridden:
+        args.model_path = default_shape_model_path(args.device)
+
+    if not subfolder_overridden:
+        args.subfolder = resolve_shape_subfolder(args.model_path)
+
     logger.info(
         "Launch args resolved to device=%s disable_tex=%s low_vram_mode=%s cache_path=%s",
         args.device,
         args.disable_tex,
         args.low_vram_mode,
         args.cache_path,
+    )
+    logger.info(
+        "Shape model resolved to model_path=%s subfolder=%s",
+        args.model_path,
+        args.subfolder,
     )
 
     if HF_SPACE and args.disable_tex:

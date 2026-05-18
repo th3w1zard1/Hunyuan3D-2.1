@@ -1,7 +1,10 @@
 from hy3dpaint.config import Hunyuan3DPaintConfig
 from hy3dpaint.runtime_profile import (
+    default_shape_model_path,
     get_runtime_notice,
     resolve_runtime_profile,
+    resolve_shape_model_selection,
+    resolve_shape_subfolder,
     should_use_spaces_gpu,
     zero_gpu_startup_enabled,
 )
@@ -24,6 +27,10 @@ def test_local_cpu_profile_defaults_to_shape_only_mode():
     assert profile.device == "cpu"
     assert profile.disable_tex is True
     assert profile.low_vram_mode is False
+    assert resolve_shape_model_selection(profile, {}) == (
+        "tencent/Hunyuan3D-2mini",
+        "hunyuan3d-dit-v2-mini",
+    )
 
 
 def test_hf_cpu_profile_disables_texture_and_uses_tmp_cache():
@@ -38,6 +45,10 @@ def test_hf_cpu_profile_disables_texture_and_uses_tmp_cache():
     assert profile.disable_tex is True
     assert profile.low_vram_mode is True
     assert profile.cache_path == "/tmp/hy3d_save_dir"
+    assert resolve_shape_model_selection(profile, {}) == (
+        "tencent/Hunyuan3D-2mini",
+        "hunyuan3d-dit-v2-mini",
+    )
 
 
 def test_hf_gpu_profile_keeps_texture_enabled_on_l40s():
@@ -178,6 +189,21 @@ def test_requested_cuda_falls_back_to_cpu_when_cuda_is_unavailable():
     assert profile.requested_device == "cuda"
     assert profile.device == "cpu"
     assert profile.disable_tex is True
+
+
+def test_shape_subfolder_tracks_selected_model_path():
+    assert resolve_shape_subfolder("tencent/Hunyuan3D-2mini") == "hunyuan3d-dit-v2-mini"
+    assert resolve_shape_subfolder("/models/Hunyuan3D-2") == "hunyuan3d-dit-v2-0"
+
+
+def test_explicit_shape_model_override_keeps_override_but_infers_matching_subfolder():
+    profile = resolve_runtime_profile({}, has_cuda=True, is_zerogpu=False)
+
+    assert default_shape_model_path("cpu") == "tencent/Hunyuan3D-2mini"
+    assert resolve_shape_model_selection(
+        profile,
+        {"HY3D_MODEL_PATH": "tencent/Hunyuan3D-2mini"},
+    ) == ("tencent/Hunyuan3D-2mini", "hunyuan3d-dit-v2-mini")
 
 
 def test_paint_config_defaults_to_primary_device_when_texture_override_is_unset(

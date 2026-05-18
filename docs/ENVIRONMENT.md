@@ -9,8 +9,8 @@ This project now supports two configuration layers:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `HY3D_MODEL_PATH` | `tencent/Hunyuan3D-2.1` | Shape model repository or local path. |
-| `HY3D_SHAPE_SUBFOLDER` | `hunyuan3d-dit-v2-1` | Shape model subfolder within the model repo. |
+| `HY3D_MODEL_PATH` | `tencent/Hunyuan3D-2mini` on CPU runtimes, otherwise `tencent/Hunyuan3D-2.1` | Shape model repository or local path. |
+| `HY3D_SHAPE_SUBFOLDER` | Matches the selected shape model (`hunyuan3d-dit-v2-mini` on CPU defaults, otherwise `hunyuan3d-dit-v2-1`) | Shape model subfolder within the model repo. |
 | `HY3D_TEXGEN_MODEL_PATH` | `tencent/Hunyuan3D-2.1` | Texture model repository or local path. |
 | `HY3D_DEVICE` | `cuda` if available, otherwise `cpu` | Primary inference device. |
 | `HY3D_CACHE_PATH` | `/tmp/hy3d_save_dir` on Spaces, otherwise `./save_dir` | Generated asset cache/output directory. |
@@ -30,9 +30,9 @@ The Gradio app now resolves one runtime profile before model startup.
 | Mode | Default device | Texture default | Low-VRAM default | Notes |
 | --- | --- | --- | --- | --- |
 | Local GPU | `cuda` | Enabled | Disabled | Full shape + texture path. |
-| Local CPU | `cpu` | Disabled | Disabled | Shape generation and export remain available by default. |
+| Local CPU | `cpu` | Disabled | Disabled | Shape generation and export remain available by default, using the smaller `Hunyuan3D-2mini` shape checkpoint unless overridden. |
 | HF GPU (`ACCELERATOR` includes `l40s` or `a100`) | `cuda` | Enabled | Disabled | Full Space path for shape + texture. |
-| HF CPU or smaller shared hardware | `cpu` | Disabled | Enabled | Shape-only fallback path for public Space validation. |
+| HF CPU or smaller shared hardware | `cpu` | Disabled | Enabled | Shape-only fallback path for public Space validation, using `Hunyuan3D-2mini` by default to stay within tighter memory budgets. |
 | HF ZeroGPU | `cuda` when available, otherwise `cpu` | Disabled | Enabled | Requires the Gradio SDK and `@spaces.GPU`-decorated GPU work. |
 
 When texture generation is disabled by default, shape generation, mesh export, and download must still work. Set `HY3D_DISABLE_TEX=0` only when the underlying hardware and memory budget are known to support it.

@@ -13,6 +13,17 @@ HF_SPACE_ENV_VARS = (
 )
 FULL_TEXTURE_ACCELERATORS = ("l40s", "a100")
 ZERO_GPU_ACCELERATORS = {"zero", "zerogpu"}
+DEFAULT_SHAPE_MODEL_PATH = "tencent/Hunyuan3D-2.1"
+DEFAULT_SHAPE_SUBFOLDER = "hunyuan3d-dit-v2-1"
+CPU_SAFE_SHAPE_MODEL_PATH = "tencent/Hunyuan3D-2mini"
+SHAPE_MODEL_SUBFOLDERS = {
+    "tencent/Hunyuan3D-2.1": "hunyuan3d-dit-v2-1",
+    "Hunyuan3D-2.1": "hunyuan3d-dit-v2-1",
+    "tencent/Hunyuan3D-2": "hunyuan3d-dit-v2-0",
+    "Hunyuan3D-2": "hunyuan3d-dit-v2-0",
+    "tencent/Hunyuan3D-2mini": "hunyuan3d-dit-v2-mini",
+    "Hunyuan3D-2mini": "hunyuan3d-dit-v2-mini",
+}
 
 
 @dataclass(frozen=True)
@@ -61,6 +72,36 @@ def zero_gpu_startup_enabled(env: Mapping[str, str] | None = None) -> bool:
         or bool(env.get("SPACES_ZERO_DEVICE_API_URL"))
         or is_zero_gpu_accelerator(env.get("ACCELERATOR"))
     )
+
+
+def default_shape_model_path(device: str) -> str:
+    if device == "cpu":
+        return CPU_SAFE_SHAPE_MODEL_PATH
+    return DEFAULT_SHAPE_MODEL_PATH
+
+
+def resolve_shape_subfolder(model_path: str) -> str:
+    normalized_path = model_path.strip().rstrip("/")
+    model_name = normalized_path.split("/")[-1] if normalized_path else ""
+    return SHAPE_MODEL_SUBFOLDERS.get(
+        normalized_path,
+        SHAPE_MODEL_SUBFOLDERS.get(model_name, DEFAULT_SHAPE_SUBFOLDER),
+    )
+
+
+def resolve_shape_model_selection(
+    profile: RuntimeProfile,
+    env: Mapping[str, str] | None = None,
+) -> tuple[str, str]:
+    env = os.environ if env is None else env
+
+    model_path = env.get("HY3D_MODEL_PATH", "").strip() or default_shape_model_path(
+        profile.device
+    )
+    subfolder = env.get("HY3D_SHAPE_SUBFOLDER", "").strip() or resolve_shape_subfolder(
+        model_path
+    )
+    return model_path, subfolder
 
 
 def resolve_runtime_profile(
