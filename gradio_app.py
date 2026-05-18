@@ -27,7 +27,7 @@ from pathlib import Path
 from hy3dpaint.runtime_compat import exit_if_unsupported_runtime_python
 from hy3dpaint.bootstrap import (
     apply_torchvision_compatibility_fix,
-    prepare_runtime_environment,
+    prepare_space_runtime_environment,
 )
 
 exit_if_unsupported_runtime_python()
@@ -120,7 +120,13 @@ if HF_SPACE:
 
     logger.info("Torch version on Spaces startup: %s", torch.__version__)
     logger.info("Resolved runtime profile: %s", format_runtime_profile(RUNTIME_PROFILE))
-    prepare_runtime_environment(CURRENT_DIR, pythonpath, logger=logger)
+    prepare_space_runtime_environment(
+        CURRENT_DIR,
+        pythonpath,
+        in_huggingface_space=HF_SPACE,
+        disable_tex=RUNTIME_PROFILE.disable_tex,
+        logger=logger,
+    )
 
 
 def get_example_img_list():

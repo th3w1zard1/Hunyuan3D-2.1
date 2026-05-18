@@ -151,3 +151,26 @@ def prepare_runtime_environment(
     resolved_root = Path(project_root).resolve()
     _ensure_custom_rasterizer(resolved_root, python_executable, logger=logger)
     _ensure_mesh_painter(resolved_root, logger=logger)
+
+
+def prepare_space_runtime_environment(
+    project_root: str | Path,
+    python_executable: str,
+    *,
+    in_huggingface_space: bool,
+    disable_tex: bool,
+    logger=None,
+) -> bool:
+    if not in_huggingface_space:
+        return False
+
+    if disable_tex:
+        _log(
+            "info",
+            "Skipping texture runtime preparation because texture generation is disabled for this runtime profile.",
+            logger=logger,
+        )
+        return False
+
+    prepare_runtime_environment(project_root, python_executable, logger=logger)
+    return True

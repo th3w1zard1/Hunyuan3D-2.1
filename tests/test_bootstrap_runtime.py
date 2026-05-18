@@ -1,3 +1,4 @@
+import hy3dpaint.bootstrap as bootstrap
 from pathlib import Path
 
 from packaging.tags import Tag
@@ -51,3 +52,45 @@ def test_custom_rasterizer_requires_source_when_wheel_is_incompatible(tmp_path):
         raise AssertionError(
             "Expected missing source package to raise FileNotFoundError"
         )
+
+
+def test_space_runtime_preparation_skips_when_texture_generation_is_disabled(
+    monkeypatch, tmp_path
+):
+    calls = []
+
+    def fake_prepare(project_root, python_executable, logger=None):
+        calls.append((project_root, python_executable, logger))
+
+    monkeypatch.setattr(bootstrap, "prepare_runtime_environment", fake_prepare)
+
+    prepared = bootstrap.prepare_space_runtime_environment(
+        tmp_path,
+        "python",
+        in_huggingface_space=True,
+        disable_tex=True,
+    )
+
+    assert prepared is False
+    assert calls == []
+
+
+def test_space_runtime_preparation_runs_when_texture_generation_is_enabled(
+    monkeypatch, tmp_path
+):
+    calls = []
+
+    def fake_prepare(project_root, python_executable, logger=None):
+        calls.append((project_root, python_executable, logger))
+
+    monkeypatch.setattr(bootstrap, "prepare_runtime_environment", fake_prepare)
+
+    prepared = bootstrap.prepare_space_runtime_environment(
+        tmp_path,
+        "python",
+        in_huggingface_space=True,
+        disable_tex=False,
+    )
+
+    assert prepared is True
+    assert calls == [(tmp_path, "python", None)]
