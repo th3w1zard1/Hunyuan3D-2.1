@@ -9,13 +9,11 @@ python_version: 3.12.12
 suggested_hardware: l40sx1
 startup_duration_timeout: 1h
 models:
-  - tencent/Hunyuan3D-2.1
-  - facebook/dinov2-giant
+  - tencent/Hunyuan3D-2mini
 
 app_file: gradio_app.py
 preload_from_hub:
-  - tencent/Hunyuan3D-2.1
-  - facebook/dinov2-giant
+  - tencent/Hunyuan3D-2mini
 pinned: false
 short_description: Image-to-3D Generation
 ---
