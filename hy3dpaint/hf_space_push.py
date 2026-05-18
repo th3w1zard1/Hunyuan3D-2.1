@@ -64,6 +64,9 @@ def resolve_cli_bin(env: Mapping[str, str] | None = None) -> str:
 
 
 def build_hf_auth_login_command(cli_bin: str, token: str) -> list[str]:
+    cli_name = Path(cli_bin).name
+    if cli_name == "huggingface-cli":
+        return [cli_bin, "login", "--token", token]
     return [
         cli_bin,
         "auth",
@@ -75,6 +78,9 @@ def build_hf_auth_login_command(cli_bin: str, token: str) -> list[str]:
 
 
 def build_hf_auth_whoami_command(cli_bin: str) -> list[str]:
+    cli_name = Path(cli_bin).name
+    if cli_name == "huggingface-cli":
+        return [cli_bin, "whoami"]
     return [cli_bin, "auth", "whoami"]
 
 

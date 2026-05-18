@@ -1,6 +1,7 @@
 from hy3dpaint.hf_space_push import (
     build_git_push_command,
     build_hf_auth_login_command,
+    build_hf_auth_whoami_command,
     build_space_remote_url,
     resolve_cli_bin,
     resolve_space_config,
@@ -53,6 +54,22 @@ def test_build_hf_auth_login_command_uses_git_credentials():
         "--token",
         "token",
         "--add-to-git-credential",
+    ]
+
+
+def test_build_hf_auth_login_command_supports_legacy_cli():
+    assert build_hf_auth_login_command("huggingface-cli", "token") == [
+        "huggingface-cli",
+        "login",
+        "--token",
+        "token",
+    ]
+
+
+def test_build_hf_auth_whoami_command_supports_legacy_cli():
+    assert build_hf_auth_whoami_command("huggingface-cli") == [
+        "huggingface-cli",
+        "whoami",
     ]
 
 

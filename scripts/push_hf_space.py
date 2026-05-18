@@ -32,17 +32,25 @@ def _ensure_command(name: str) -> None:
 
 
 def _ensure_hf_auth(cli_bin: str, token: str | None) -> None:
-    if token:
-        _run(build_hf_auth_login_command(cli_bin, token))
-        return
-
     try:
         _run(build_hf_auth_whoami_command(cli_bin))
-    except subprocess.CalledProcessError as error:
-        raise RuntimeError(
-            "HF_TOKEN is not set and the Hugging Face CLI is not already authenticated. "
-            "Run `hf auth login` or export HF_TOKEN before pushing the Space."
-        ) from error
+        return
+    except subprocess.CalledProcessError:
+        pass
+
+    if token:
+        try:
+            _run(build_hf_auth_login_command(cli_bin, token))
+            return
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(
+                "Failed to authenticate with the Hugging Face CLI using HF_TOKEN."
+            ) from error
+
+    raise RuntimeError(
+        "HF_TOKEN is not set and the Hugging Face CLI is not already authenticated. "
+        "Run `hf auth login` or export HF_TOKEN before pushing the Space."
+    )
 
 
 def _get_authenticated_hf_user(cli_bin: str) -> str:
