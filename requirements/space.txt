@@ -1,9 +1,13 @@
 # Hugging Face Spaces inject gradio, spaces, uvicorn, websockets, and a torch upper bound.
 # Keep the Space-specific requirements focused on the serving/runtime slice to avoid
 # resolver conflicts with platform-managed packages and unnecessary optional extras.
+# The managed Gradio builder fails when it resolves the default Linux CUDA torch
+# wheels, so use the PyTorch CPU index for the Space runtime.
 # The Space runtime compiles the mesh painter helper via pybind11, but it does not
 # use Blender-backed GLB export or source-build the rasterizer on the supported
-# Python 3.10 runtime.
+# Hugging Face runtime envelope.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 pybind11>=2.13.4
 
 accelerate>=1.1.1
