@@ -119,6 +119,10 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     assert not any("==" in line for line in space_requirements)
 
 
+def test_space_builder_system_packages_stay_empty_for_shape_only_runtime():
+    assert _read_lines("packages.txt") == []
+
+
 def test_runtime_manifests_avoid_exact_dependency_pins():
     pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
     dependency_groups = [pyproject["project"]["dependencies"]]
