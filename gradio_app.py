@@ -70,6 +70,8 @@ HF_SPACE = _running_in_huggingface_space()
 try:
     import spaces as _spaces_runtime
 except ImportError:
+    if HF_SPACE:
+        raise
     _spaces_runtime = None
 
 
