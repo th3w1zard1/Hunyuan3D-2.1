@@ -116,6 +116,7 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     assert not any(line.startswith("basicsr") for line in space_requirements)
     assert not any(line.startswith("bpy") for line in space_requirements)
     assert not any(line.startswith("configargparse") for line in space_requirements)
+    assert not any(line.startswith("onnxruntime") for line in space_requirements)
     assert not any(line.startswith("pandas") for line in space_requirements)
     assert not any(line.startswith("psutil") for line in space_requirements)
     assert not any(line.startswith("pymeshlab") for line in space_requirements)
@@ -124,6 +125,7 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     assert not any(line.startswith("pygltflib") for line in space_requirements)
     assert not any(line.startswith("pythreejs") for line in space_requirements)
     assert not any(line.startswith("realesrgan") for line in space_requirements)
+    assert not any(line.startswith("rembg") for line in space_requirements)
     assert not any(line.startswith("torchaudio") for line in space_requirements)
     assert not any(line.startswith("xatlas") for line in space_requirements)
     assert not any(

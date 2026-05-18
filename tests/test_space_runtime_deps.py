@@ -41,6 +41,7 @@ def test_load_shape_runtime_components_uses_postprocessors_when_available(monkey
     assert components.FloaterRemover is floater_remover
     assert components.DegenerateFaceRemover is degenerate_face_remover
     assert components.FaceReducer is face_reducer
+    assert components.using_background_removal_fallback is False
     assert components.using_mesh_postprocess_fallback is False
 
 
@@ -84,6 +85,50 @@ def test_load_shape_runtime_components_falls_back_when_pymeshlab_is_missing(
         (
             "pymeshlab is unavailable; mesh cleanup and face reduction will run in no-op fallback mode: %s",
             "No module named 'pymeshlab'",
+        )
+    ]
+
+
+def test_load_shape_runtime_components_falls_back_when_background_deps_are_missing(
+    monkeypatch,
+):
+    logger_messages = []
+
+    class Logger:
+        def warning(self, message, error):
+            logger_messages.append((message, str(error)))
+
+    missing_onnxruntime = ModuleNotFoundError("No module named 'onnxruntime'")
+    missing_onnxruntime.name = "onnxruntime"
+
+    modules = {
+        "hy3dshape.hy3dshape.pipelines": SimpleNamespace(
+            export_to_trimesh="exporter",
+            Hunyuan3DDiTFlowMatchingPipeline=type("Pipeline", (), {}),
+        ),
+        "hy3dshape.hy3dshape.postprocessors": SimpleNamespace(
+            FloaterRemover=type("FloaterRemover", (), {}),
+            DegenerateFaceRemover=type("DegenerateFaceRemover", (), {}),
+            FaceReducer=type("FaceReducer", (), {}),
+        ),
+    }
+
+    def fake_import(name):
+        if name == "hy3dshape.hy3dshape.rembg":
+            raise missing_onnxruntime
+        return modules[name]
+
+    monkeypatch.setattr(space_runtime_deps.importlib, "import_module", fake_import)
+
+    components = space_runtime_deps.load_shape_runtime_components(logger=Logger())
+
+    image = object()
+    assert components.using_background_removal_fallback is True
+    assert components.BackgroundRemover()(image) is image
+    assert logger_messages == [
+        (
+            "Background removal dependencies are unavailable; input images will be used as-is: %s",
+            "No module named 'onnxruntime'",
         )
     ]
 
