@@ -111,17 +111,21 @@ def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_p
     space_requirements = _read_lines("requirements/space.txt")
 
     assert "--extra-index-url https://download.pytorch.org/whl/cpu" in space_requirements
-    assert "pybind11>=2.13.4" in space_requirements
     assert "opencv-python-headless>=4.11.0.86" in space_requirements
     assert "-r build.txt" not in space_requirements
     assert not any(line.startswith("basicsr") for line in space_requirements)
     assert not any(line.startswith("bpy") for line in space_requirements)
+    assert not any(line.startswith("configargparse") for line in space_requirements)
+    assert not any(line.startswith("pandas") for line in space_requirements)
+    assert not any(line.startswith("psutil") for line in space_requirements)
+    assert not any(line.startswith("pymeshlab") for line in space_requirements)
     assert not any(line.startswith("opencv-python==") for line in space_requirements)
     assert not any(line.startswith("open3d") for line in space_requirements)
     assert not any(line.startswith("pygltflib") for line in space_requirements)
     assert not any(line.startswith("pythreejs") for line in space_requirements)
     assert not any(line.startswith("realesrgan") for line in space_requirements)
     assert not any(line.startswith("torchaudio") for line in space_requirements)
+    assert not any(line.startswith("xatlas") for line in space_requirements)
     assert not any(
         line.startswith("--extra-index-url")
         and line != "--extra-index-url https://download.pytorch.org/whl/cpu"

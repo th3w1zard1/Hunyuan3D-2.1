@@ -3,15 +3,11 @@
 # resolver conflicts with platform-managed packages and unnecessary optional extras.
 # The managed Gradio builder fails when it resolves the default Linux CUDA torch
 # wheels, so use the PyTorch CPU index for the Space runtime.
-# The Space runtime compiles the mesh painter helper via pybind11, but it does not
-# use Blender-backed GLB export or source-build the rasterizer on the supported
-# Hugging Face runtime envelope.
+# Keep Space-only startup trimmed to the default shape path; optional texture and
+# heavy mesh-cleanup tooling is loaded lazily or skipped in fallback mode.
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-pybind11>=2.13.4
-
 accelerate>=1.1.1
-configargparse>=1.7
 diffusers>=0.30.0
 einops>=0.8.0
 huggingface-hub>=0.30.2
@@ -20,11 +16,8 @@ numpy>=1.24.4
 omegaconf>=2.3.0
 onnxruntime>=1.16.3
 opencv-python-headless>=4.11.0.86
-pandas>=2.2.2
 packaging>=24,<26
 pillow>=10,<12
-psutil>=6.0.0
-pymeshlab>=2022.2.post3
 pyyaml>=6.0.2
 rembg>=2.0.65
 safetensors>=0.4.4
@@ -34,7 +27,6 @@ timm>=1.0,<2
 tqdm>=4.66.5
 transformers>=4.46.0
 trimesh>=4.4.7
-xatlas>=0.0.9
 
 torch>=2.5.1
 torchvision>=0.20.1

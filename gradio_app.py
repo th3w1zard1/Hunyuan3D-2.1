@@ -29,6 +29,7 @@ from hy3dpaint.bootstrap import (
     apply_torchvision_compatibility_fix,
     prepare_space_runtime_environment,
 )
+from hy3dpaint.space_runtime_deps import load_shape_runtime_components
 
 exit_if_unsupported_runtime_python()
 
@@ -1090,15 +1091,13 @@ if __name__ == "__main__":
     #     t2i_worker = HunyuanDiTPipeline('Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled')
     #     HAS_T2I = True
 
-    from hy3dshape.pipelines import export_to_trimesh
-    from hy3dshape.rembg import BackgroundRemover
-
-    from hy3dshape import (
-        DegenerateFaceRemover,
-        FaceReducer,
-        FloaterRemover,
-        Hunyuan3DDiTFlowMatchingPipeline,
-    )
+    shape_runtime = load_shape_runtime_components(logger=logger)
+    export_to_trimesh = shape_runtime.export_to_trimesh
+    BackgroundRemover = shape_runtime.BackgroundRemover
+    DegenerateFaceRemover = shape_runtime.DegenerateFaceRemover
+    FaceReducer = shape_runtime.FaceReducer
+    FloaterRemover = shape_runtime.FloaterRemover
+    Hunyuan3DDiTFlowMatchingPipeline = shape_runtime.Hunyuan3DDiTFlowMatchingPipeline
 
     rmbg_worker = BackgroundRemover()
     i23d_worker = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(
