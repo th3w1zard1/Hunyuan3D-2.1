@@ -46,6 +46,7 @@ from hy3dpaint.runtime_profile import (  # noqa: E402
     format_runtime_profile,
     get_runtime_notice,
     resolve_runtime_profile,
+    should_use_spaces_gpu,
 )
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -106,6 +107,16 @@ RUNTIME_PROFILE = resolve_runtime_profile(
     has_cuda=torch.cuda.is_available(),
     is_zerogpu=IS_ZEROGPU,
 )
+
+
+def _runtime_gpu(duration=60):
+    if should_use_spaces_gpu(RUNTIME_PROFILE):
+        return spaces.GPU(duration=duration)
+
+    def decorator(func):
+        return func
+
+    return decorator
 
 
 if HF_SPACE:
@@ -301,7 +312,7 @@ def _enable_runtime_cpu_offload(shape_worker, texture_worker=None):
         )
 
 
-@spaces.GPU(duration=60)
+@_runtime_gpu(duration=60)
 def _gen_shape(
     caption=None,
     image=None,
@@ -437,7 +448,7 @@ def _gen_shape(
     return mesh, main_image, save_folder, stats, seed
 
 
-@spaces.GPU(duration=180)
+@_runtime_gpu(duration=180)
 def generation_all(
     caption=None,
     image=None,
@@ -525,7 +536,7 @@ def generation_all(
     )
 
 
-@spaces.GPU(duration=60)
+@_runtime_gpu(duration=60)
 def shape_generation(
     caption=None,
     image=None,

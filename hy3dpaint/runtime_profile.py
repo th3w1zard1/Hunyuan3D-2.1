@@ -122,6 +122,10 @@ def format_runtime_profile(profile: RuntimeProfile) -> str:
     )
 
 
+def should_use_spaces_gpu(profile: RuntimeProfile) -> bool:
+    return profile.in_huggingface_space and profile.is_zerogpu
+
+
 def get_runtime_notice(
     profile: RuntimeProfile,
     *,

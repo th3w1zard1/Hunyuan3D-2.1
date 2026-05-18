@@ -1,5 +1,9 @@
 from hy3dpaint.config import Hunyuan3DPaintConfig
-from hy3dpaint.runtime_profile import get_runtime_notice, resolve_runtime_profile
+from hy3dpaint.runtime_profile import (
+    get_runtime_notice,
+    resolve_runtime_profile,
+    should_use_spaces_gpu,
+)
 
 
 def test_local_gpu_profile_defaults_to_textured_cuda_mode():
@@ -83,6 +87,30 @@ def test_runtime_notice_calls_out_local_cpu_fallback():
 
     assert "Local CPU mode" in notice
     assert "Shape generation and export stay available" in notice
+
+
+def test_spaces_gpu_wrapper_is_reserved_for_hf_zerogpu():
+    local_gpu = resolve_runtime_profile({}, has_cuda=True, is_zerogpu=False)
+    hf_cpu = resolve_runtime_profile(
+        {"SPACE_ID": "owner/space", "ACCELERATOR": "cpu-basic"},
+        has_cuda=False,
+        is_zerogpu=False,
+    )
+    hf_gpu = resolve_runtime_profile(
+        {"SPACE_ID": "owner/space", "ACCELERATOR": "l40sx1"},
+        has_cuda=True,
+        is_zerogpu=False,
+    )
+    hf_zerogpu = resolve_runtime_profile(
+        {"SPACE_ID": "owner/space", "ACCELERATOR": "zerogpu"},
+        has_cuda=True,
+        is_zerogpu=True,
+    )
+
+    assert should_use_spaces_gpu(local_gpu) is False
+    assert should_use_spaces_gpu(hf_cpu) is False
+    assert should_use_spaces_gpu(hf_gpu) is False
+    assert should_use_spaces_gpu(hf_zerogpu) is True
 
 
 def test_explicit_env_overrides_take_precedence_when_supported():
