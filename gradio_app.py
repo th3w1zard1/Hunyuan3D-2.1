@@ -43,6 +43,11 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from hy3dshape.utils import logger  # noqa: E402
 
 from hy3dpaint.convert_utils import create_glb_with_pbr_materials  # noqa: E402
+from hy3dpaint.runtime_profile import (  # noqa: E402
+    format_runtime_profile,
+    get_runtime_notice,
+    resolve_runtime_profile,
+)
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAX_SEED = int(1e7)
@@ -50,40 +55,11 @@ pythonpath = sys.executable
 t2i_worker = None
 
 
-def _env_flag(name, default=False):
-    value = os.getenv(name)
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
-
-
 def _running_in_huggingface_space():
     return any(
         os.getenv(name)
         for name in ("SPACE_ID", "SPACE_HOST", "SPACE_AUTHOR_NAME", "SPACE_REPO_NAME")
     )
-
-
-def _supports_full_texture(accelerator=None):
-    accelerator = (accelerator or os.getenv("ACCELERATOR", "")).lower()
-    return any(token in accelerator for token in ("l40s", "a100"))
-
-
-def _default_cache_path():
-    default_path = "/tmp/hy3d_save_dir" if HF_SPACE else "./save_dir"
-    return os.getenv("HY3D_CACHE_PATH", default_path)
-
-
-def _default_disable_tex():
-    if "HY3D_DISABLE_TEX" in os.environ:
-        return _env_flag("HY3D_DISABLE_TEX")
-    return HF_SPACE and not _supports_full_texture()
-
-
-def _default_low_vram_mode():
-    if "HY3D_LOW_VRAM_MODE" in os.environ:
-        return _env_flag("HY3D_LOW_VRAM_MODE")
-    return HF_SPACE and not _supports_full_texture()
 
 
 def _cli_flag_present(flag):
@@ -115,6 +91,19 @@ else:
     spaces = _spaces_runtime
 
 
+try:
+    IS_ZEROGPU = bool(HF_SPACE and hasattr(spaces, "is_zerogpu") and spaces.is_zerogpu())
+except Exception:
+    IS_ZEROGPU = False
+
+
+RUNTIME_PROFILE = resolve_runtime_profile(
+    env=os.environ,
+    has_cuda=torch.cuda.is_available(),
+    is_zerogpu=IS_ZEROGPU,
+)
+
+
 if HF_SPACE:
     """
     Setup environment for running on Huggingface platform.
@@ -130,6 +119,7 @@ if HF_SPACE:
     """
 
     logger.info("Torch version on Spaces startup: %s", torch.__version__)
+    logger.info("Resolved runtime profile: %s", format_runtime_profile(RUNTIME_PROFILE))
     prepare_runtime_environment(CURRENT_DIR, pythonpath, logger=logger)
 
 
@@ -263,6 +253,34 @@ height="{height}" width="100%" frameborder="0"></iframe>'
     """
 
 
+def _enable_runtime_cpu_offload(shape_worker, texture_worker=None):
+    if not args.low_vram_mode or args.device != "cuda":
+        return
+
+    try:
+        shape_worker.enable_model_cpu_offload(device=args.device)
+        logger.info("Enabled CPU offload for the shape pipeline.")
+    except Exception as error:
+        logger.warning("Failed to enable CPU offload for the shape pipeline: %s", error)
+
+    if texture_worker is None:
+        return
+
+    multiview_model = texture_worker.models.get("multiview_model")
+    diffusers_pipeline = getattr(multiview_model, "pipeline", None)
+    if diffusers_pipeline is None or not hasattr(diffusers_pipeline, "enable_model_cpu_offload"):
+        return
+
+    try:
+        diffusers_pipeline.enable_model_cpu_offload()
+        logger.info("Enabled CPU offload for the texture diffusion pipeline.")
+    except Exception as error:
+        logger.warning(
+            "Failed to enable CPU offload for the texture diffusion pipeline: %s",
+            error,
+        )
+
+
 @spaces.GPU(duration=60)
 def _gen_shape(
     caption=None,
@@ -309,6 +327,20 @@ def _gen_shape(
         "model": {
             "shapegen": f"{args.model_path}/{args.subfolder}",
             "texgen": f"{args.texgen_model_path}",
+        },
+        "runtime": {
+            "mode": RUNTIME_PROFILE.mode,
+            "device": args.device,
+            "disable_tex": args.disable_tex,
+            "low_vram_mode": args.low_vram_mode,
+            "zerogpu": RUNTIME_PROFILE.is_zerogpu,
+            "supports_full_texture": RUNTIME_PROFILE.supports_full_texture,
+            "cache_path": SAVE_DIR,
+            "notice": get_runtime_notice(
+                RUNTIME_PROFILE,
+                disable_tex=args.disable_tex,
+                low_vram_mode=args.low_vram_mode,
+            ),
         },
         "params": {
             "caption": caption,
@@ -534,6 +566,12 @@ def build_app():
     if TURBO_MODE:
         title = title.replace(":", "-Turbo: Fast ")
 
+    runtime_notice = get_runtime_notice(
+        RUNTIME_PROFILE,
+        disable_tex=args.disable_tex,
+        low_vram_mode=args.low_vram_mode,
+    )
+
     title_html = f"""
     <div style="font-size: 2em; font-weight: bold; text-align: center; margin-bottom: 5px">
 
@@ -541,6 +579,9 @@ def build_app():
     </div>
     <div align="center">
     Tencent Hunyuan3D Team
+    </div>
+    <div style="max-width: 900px; margin: 12px auto 18px auto; padding: 12px 16px; border-radius: 10px; background: #f5f7eb; border: 1px solid #d6ddb7; color: #334155; text-align: center; line-height: 1.5;">
+    <strong>Runtime:</strong> {RUNTIME_PROFILE.mode} on {args.device}. {runtime_notice}
     </div>
     """
     custom_css = """
@@ -909,26 +950,23 @@ if __name__ == "__main__":
     parser.add_argument(
         "--device",
         type=str,
-        default=os.getenv(
-            "HY3D_DEVICE", "cuda" if torch.cuda.is_available() else "cpu"
-        ),
+        default=RUNTIME_PROFILE.device,
     )
     parser.add_argument("--mc_algo", type=str, default="mc")
-    parser.add_argument("--cache-path", type=str, default=_default_cache_path())
+    parser.add_argument("--cache-path", type=str, default=RUNTIME_PROFILE.cache_path)
     parser.add_argument("--enable_t23d", action="store_true")
-    parser.add_argument("--disable_tex", action="store_true")
+    parser.add_argument(
+        "--disable_tex", action="store_true", default=RUNTIME_PROFILE.disable_tex
+    )
     parser.add_argument("--enable_flashvdm", action="store_true")
     parser.add_argument("--compile", action="store_true")
-    parser.add_argument("--low_vram_mode", action="store_true")
+    parser.add_argument(
+        "--low_vram_mode",
+        action="store_true",
+        default=RUNTIME_PROFILE.low_vram_mode,
+    )
     args = parser.parse_args()
     args.enable_flashvdm = False
-
-    if not _cli_flag_present("--cache-path"):
-        args.cache_path = _default_cache_path()
-    if not _cli_flag_present("--disable_tex"):
-        args.disable_tex = _default_disable_tex()
-    if not _cli_flag_present("--low_vram_mode"):
-        args.low_vram_mode = _default_low_vram_mode()
 
     if args.device == "cuda" and not torch.cuda.is_available():
         logger.warning(
@@ -938,10 +976,18 @@ if __name__ == "__main__":
         args.disable_tex = True
         args.low_vram_mode = True
 
+    logger.info(
+        "Launch args resolved to device=%s disable_tex=%s low_vram_mode=%s cache_path=%s",
+        args.device,
+        args.disable_tex,
+        args.low_vram_mode,
+        args.cache_path,
+    )
+
     if HF_SPACE and args.disable_tex:
         logger.info(
             "Texture generation disabled for this Space instance. "
-            "Set HY3D_DISABLE_TEX=0 on L40S/A100-class hardware to enable it."
+            "Set HY3D_DISABLE_TEX=0 on compatible hardware if you want to force-enable it."
         )
 
     SAVE_DIR = args.cache_path
@@ -1045,6 +1091,7 @@ if __name__ == "__main__":
         use_safetensors=False,
         device=args.device,
     )
+    _enable_runtime_cpu_offload(i23d_worker, tex_pipeline if HAS_TEXTUREGEN else None)
     if args.enable_flashvdm:
         mc_algo = "mc" if args.device in ["cpu", "mps"] else args.mc_algo
         i23d_worker.enable_flashvdm(mc_algo=mc_algo)
@@ -1073,7 +1120,7 @@ if __name__ == "__main__":
     demo = build_app()
     app = gr.mount_gradio_app(app, demo, path="/")
 
-    if HF_SPACE and hasattr(spaces, "is_zerogpu") and spaces.is_zerogpu():
+    if RUNTIME_PROFILE.is_zerogpu:
         # for Zerogpu
         from spaces import zero
 

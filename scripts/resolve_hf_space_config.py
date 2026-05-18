@@ -1,48 +1,25 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
-
-def _default_repo_name() -> str:
-    github_repository = os.getenv("GITHUB_REPOSITORY", "")
-    if "/" in github_repository:
-        return github_repository.rsplit("/", 1)[1]
-    return Path.cwd().name
-
-
-def _default_namespace() -> str:
-    return (
-        os.getenv("HF_SPACE_NAMESPACE")
-        or os.getenv("GITHUB_REPOSITORY_OWNER")
-        or os.getenv("GITHUB_ACTOR")
-        or ""
-    )
+from hy3dpaint.hf_space_push import resolve_space_config
 
 
 def main() -> int:
-    repo_name = os.getenv("HF_SPACE_NAME") or _default_repo_name()
-    namespace = _default_namespace()
-    if not namespace:
-        raise SystemExit(
-            "Unable to resolve HF space namespace. Set HF_SPACE_NAMESPACE or GITHUB_REPOSITORY_OWNER."
-        )
-
-    sdk = os.getenv("HF_SPACE_SDK", "gradio")
-    repo_id = f"{namespace}/{repo_name}"
+    config = resolve_space_config(os.environ)
 
     github_output = os.getenv("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a", encoding="utf-8") as output_file:
-            output_file.write(f"repo_id={repo_id}\n")
-            output_file.write(f"repo_name={repo_name}\n")
-            output_file.write(f"repo_namespace={namespace}\n")
-            output_file.write(f"space_sdk={sdk}\n")
+            output_file.write(f"repo_id={config.repo_id}\n")
+            output_file.write(f"repo_name={config.repo_name}\n")
+            output_file.write(f"repo_namespace={config.namespace}\n")
+            output_file.write(f"space_sdk={config.sdk}\n")
 
-    print(f"repo_id={repo_id}")
-    print(f"repo_name={repo_name}")
-    print(f"repo_namespace={namespace}")
-    print(f"space_sdk={sdk}")
+    print(f"repo_id={config.repo_id}")
+    print(f"repo_name={config.repo_name}")
+    print(f"repo_namespace={config.namespace}")
+    print(f"space_sdk={config.sdk}")
     return 0
 
 

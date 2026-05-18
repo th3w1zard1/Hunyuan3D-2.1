@@ -6,6 +6,8 @@ import subprocess
 from huggingface_hub import HfApi
 from huggingface_hub.errors import HfHubHTTPError
 
+from hy3dpaint.hf_space_push import resolve_cli_bin, resolve_space_config
+
 
 def _env_flag(name: str, default: bool = False) -> bool:
     value = os.getenv(name)
@@ -19,16 +21,7 @@ def _resolve_repo_id() -> str:
     if repo_id:
         return repo_id
 
-    namespace = os.getenv("HF_SPACE_NAMESPACE") or os.getenv("GITHUB_REPOSITORY_OWNER")
-    github_repository = os.getenv("GITHUB_REPOSITORY", "")
-    repo_name = os.getenv("HF_SPACE_NAME") or github_repository.rsplit("/", 1)[-1]
-
-    if not namespace or not repo_name:
-        raise RuntimeError(
-            "Unable to resolve HF space repo id. Set HF_SPACE_REPO_ID or provide HF_SPACE_NAMESPACE and HF_SPACE_NAME."
-        )
-
-    return f"{namespace}/{repo_name}"
+    return resolve_space_config(os.environ).repo_id
 
 
 def _resolve_create_command(
@@ -62,7 +55,7 @@ def main() -> int:
     sdk = os.getenv("HF_SPACE_SDK", "gradio")
     private = _env_flag("HF_SPACE_PRIVATE")
     create_if_missing = _env_flag("HF_SPACE_CREATE_IF_MISSING", True)
-    cli_bin = os.getenv("HF_CLI_BIN", "huggingface-cli")
+    cli_bin = resolve_cli_bin(os.environ)
 
     api = HfApi(token=token)
     owner_name = api.whoami(token=token)["name"]

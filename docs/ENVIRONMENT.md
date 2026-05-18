@@ -20,8 +20,22 @@ This project now supports two configuration layers:
 | `HY3D_REALESRGAN_PATH` | bundled `hy3dpaint` checkpoint | Override the packaged RealESRGAN checkpoint path. |
 | `HY3D_TEX_CFG_PATH` | bundled `hy3dpaint` config | Override the packaged texture model config path. |
 | `HY3D_TEX_CUSTOM_PIPELINE` | bundled `hy3dpaint` pipeline module | Override the packaged custom Diffusers pipeline path. |
-| `HY3D_TEX_DEVICE` | `cuda` | Texture generation device override. |
+| `HY3D_TEX_DEVICE` | `HY3D_DEVICE` if set, otherwise `cuda` | Texture generation device override for standalone texture workflows. The Gradio app resolves one shared runtime device before startup. |
 | `ACCELERATOR` | unset | Hugging Face hardware hint used to decide whether full texture generation should be enabled. |
+
+## Runtime Mode Defaults
+
+The Gradio app now resolves one runtime profile before model startup.
+
+| Mode | Default device | Texture default | Low-VRAM default | Notes |
+| --- | --- | --- | --- | --- |
+| Local GPU | `cuda` | Enabled | Disabled | Full shape + texture path. |
+| Local CPU | `cpu` | Disabled | Disabled | Shape generation and export remain available by default. |
+| HF GPU (`ACCELERATOR` includes `l40s` or `a100`) | `cuda` | Enabled | Disabled | Full Space path for shape + texture. |
+| HF CPU or smaller shared hardware | `cpu` | Disabled | Enabled | Shape-only fallback path for public Space validation. |
+| HF ZeroGPU | `cuda` when available, otherwise `cpu` | Disabled | Enabled | Requires the Gradio SDK and `@spaces.GPU`-decorated GPU work. |
+
+When texture generation is disabled by default, shape generation, mesh export, and download must still work. Set `HY3D_DISABLE_TEX=0` only when the underlying hardware and memory budget are known to support it.
 
 ## Hugging Face Space Sync Variables
 
@@ -35,13 +49,15 @@ These variables are intended for GitHub Actions repo variables or workflow input
 | `HF_SPACE_AUTO_SYNC` | `false` | When set to `true`, pushes to `main` trigger the Space mirror workflow automatically. |
 | `HF_SPACE_PRIVATE` | `false` | Create a private Space if a new one must be bootstrapped. |
 | `HF_SPACE_CREATE_IF_MISSING` | `true` | Allow automation to create the Space when it does not exist yet. |
-| `HF_CLI_BIN` | `huggingface-cli` | CLI binary to use. Override this to `hf` if your environment exposes the newer alias. |
+| `HF_CLI_BIN` | `hf` | CLI binary to use for auth and Space creation. |
+| `HF_SPACE_REMOTE_NAME` | `space` | Git remote name used by `python scripts/push_hf_space.py`. |
+| `HF_SPACE_REMOTE_BRANCH` | `main` | Target branch used by `python scripts/push_hf_space.py`. |
 
 ## Required Secrets
 
 | Secret | Scope | Purpose |
 | --- | --- | --- |
-| `HF_TOKEN` | GitHub Actions | Write-capable Hugging Face token for Space creation and mirroring. |
+| `HF_TOKEN` | Local shell or GitHub Actions | Write-capable Hugging Face token for `hf auth login`, Space creation, and git pushes to the Space remote. |
 
 ## Notes
 
@@ -49,4 +65,4 @@ These variables are intended for GitHub Actions repo variables or workflow input
 - The pinned PyTorch runtime in this repo must be installed on a Python version with matching wheels. During current validation on Linux, `torch==2.5.1` did not resolve on Python 3.14, and the official CUDA 12.4 wheel index exposes `cp310` through `cp313` builds but not `cp314`.
 - The runtime bootstrap script is [scripts/bootstrap_runtime.py](../scripts/bootstrap_runtime.py).
 - The GitHub bootstrap helper is [scripts/bootstrap_github_repo.sh](../scripts/bootstrap_github_repo.sh).
-- The Space sync helper scripts are [scripts/resolve_hf_space_config.py](../scripts/resolve_hf_space_config.py) and [scripts/ensure_hf_space.py](../scripts/ensure_hf_space.py).
+- The Space sync helper scripts are [scripts/resolve_hf_space_config.py](../scripts/resolve_hf_space_config.py), [scripts/ensure_hf_space.py](../scripts/ensure_hf_space.py), and [scripts/push_hf_space.py](../scripts/push_hf_space.py).

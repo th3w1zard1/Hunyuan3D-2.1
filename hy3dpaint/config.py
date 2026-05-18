@@ -6,7 +6,9 @@ from hy3dpaint.runtime_paths import get_default_runtime_paths
 class Hunyuan3DPaintConfig:
     def __init__(self, max_num_view=6, resolution=512):
         runtime_paths = get_default_runtime_paths()
-        self.device = os.getenv("HY3D_TEX_DEVICE", "cuda")
+        self.device = os.getenv(
+            "HY3D_TEX_DEVICE", os.getenv("HY3D_DEVICE", "cuda")
+        )
 
         self.multiview_cfg_path = os.getenv(
             "HY3D_TEX_CFG_PATH", runtime_paths["multiview_cfg_path"]

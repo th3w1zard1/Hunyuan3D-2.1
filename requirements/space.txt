@@ -1,9 +1,11 @@
---extra-index-url https://download.blender.org/pypi/
--r build.txt
-
-# Hugging Face Spaces injects gradio, spaces, uvicorn, websockets, and a torch upper bound.
+# Hugging Face Spaces inject gradio, spaces, uvicorn, websockets, and a torch upper bound.
 # Keep the Space-specific requirements focused on the serving/runtime slice to avoid
-# resolver conflicts with platform-managed packages and unnecessary training extras.
+# resolver conflicts with platform-managed packages and unnecessary optional extras.
+# The Space runtime compiles the mesh painter helper via pybind11, but it does not
+# use Blender-backed GLB export or source-build the rasterizer on the supported
+# Python 3.10 runtime.
+pybind11==2.13.4
+
 accelerate==1.1.1
 basicsr==1.4.2
 configargparse==1.7
@@ -38,4 +40,3 @@ xatlas==0.0.9
 torch==2.5.1
 torchaudio==2.5.1
 torchvision==0.20.1
-bpy==4.0

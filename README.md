@@ -135,6 +135,14 @@ Additional operator and deployment documentation:
 - [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
 - [docs/SPACE_DEPLOYMENT.md](docs/SPACE_DEPLOYMENT.md)
 
+The checked-in Space workflow now uses the Hugging Face CLI plus a direct git push to the Space remote instead of file mirroring. From a validated local commit, run:
+
+```bash
+python scripts/push_hf_space.py
+```
+
+Runtime defaults are resolved automatically for local GPU, local CPU, Hugging Face GPU, Hugging Face CPU, and Hugging Face ZeroGPU modes. ZeroGPU remains a Gradio-only Spaces path, and HF CPU plus HF ZeroGPU validation must be performed sequentially on the same Space because one Space cannot expose both hardware modes at once.
+
 ### Code Usage
 
 We designed a diffusers-like API to use our shape generation model - Hunyuan3D-Shape and texture synthesis model -

@@ -72,3 +72,12 @@ def test_gradio_runtime_pin_matches_space_runtime_contract():
     assert f"gradio=={sdk_version}" in dependencies
     assert f"gradio=={sdk_version}" in _read_lines("requirements/base.txt")
     assert not any(line.startswith("gradio") for line in space_requirements)
+
+
+def test_space_requirements_keep_optional_glb_and_build_tooling_out_of_builder_path():
+    space_requirements = _read_lines("requirements/space.txt")
+
+    assert "pybind11==2.13.4" in space_requirements
+    assert "-r build.txt" not in space_requirements
+    assert not any(line.startswith("bpy") for line in space_requirements)
+    assert not any(line.startswith("--extra-index-url") for line in space_requirements)
