@@ -3,6 +3,7 @@ from hy3dpaint.runtime_profile import (
     get_runtime_notice,
     resolve_runtime_profile,
     should_use_spaces_gpu,
+    zero_gpu_startup_enabled,
 )
 
 
@@ -67,6 +68,19 @@ def test_hf_zerogpu_profile_keeps_cuda_when_available_but_disables_texture():
     assert profile.should_enable_cpu_offload is True
 
 
+def test_hf_zerogpu_profile_accepts_accelerator_zero_hint_without_spaces_probe():
+    profile = resolve_runtime_profile(
+        {"SPACE_ID": "owner/space", "ACCELERATOR": "zero"},
+        has_cuda=True,
+        is_zerogpu=False,
+    )
+
+    assert profile.mode == "hf-zerogpu"
+    assert profile.device == "cuda"
+    assert profile.disable_tex is True
+    assert profile.low_vram_mode is True
+
+
 def test_runtime_notice_calls_out_shape_only_zerogpu_mode():
     profile = resolve_runtime_profile(
         {"SPACE_ID": "owner/space", "ACCELERATOR": "zerogpu"},
@@ -111,6 +125,25 @@ def test_spaces_gpu_wrapper_is_reserved_for_hf_zerogpu():
     assert should_use_spaces_gpu(hf_cpu) is False
     assert should_use_spaces_gpu(hf_gpu) is False
     assert should_use_spaces_gpu(hf_zerogpu) is True
+
+
+def test_zero_gpu_startup_detects_accelerator_and_platform_hints():
+    assert zero_gpu_startup_enabled({"SPACE_ID": "owner/space", "ACCELERATOR": "zero"}) is True
+    assert (
+        zero_gpu_startup_enabled(
+            {
+                "SPACE_ID": "owner/space",
+                "SPACES_ZERO_DEVICE_API_URL": "https://device-api.example",
+            }
+        )
+        is True
+    )
+    assert (
+        zero_gpu_startup_enabled(
+            {"SPACE_ID": "owner/space", "ACCELERATOR": "cpu-basic"}
+        )
+        is False
+    )
 
 
 def test_explicit_env_overrides_take_precedence_when_supported():

@@ -47,6 +47,7 @@ from hy3dpaint.runtime_profile import (  # noqa: E402
     get_runtime_notice,
     resolve_runtime_profile,
     should_use_spaces_gpu,
+    zero_gpu_startup_enabled,
 )
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +75,7 @@ if HF_SPACE and os.getenv("SPACES_ZERO_DEVICE_API_URL") and not os.getenv(
     os.environ["SPACES_ZERO_GPU"] = "true"
 
 ZERO_GPU_STARTUP_ENABLED = HF_SPACE and bool(
-    os.getenv("SPACES_ZERO_GPU") or os.getenv("SPACES_ZERO_DEVICE_API_URL")
+    zero_gpu_startup_enabled(os.environ)
 )
 
 if HF_SPACE:

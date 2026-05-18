@@ -12,6 +12,7 @@ HF_SPACE_ENV_VARS = (
     "SPACE_REPO_NAME",
 )
 FULL_TEXTURE_ACCELERATORS = ("l40s", "a100")
+ZERO_GPU_ACCELERATORS = {"zero", "zerogpu"}
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,22 @@ def supports_full_texture(accelerator: str | None = None) -> bool:
     return any(token in accelerator for token in FULL_TEXTURE_ACCELERATORS)
 
 
+def is_zero_gpu_accelerator(accelerator: str | None = None) -> bool:
+    accelerator = (accelerator or "").strip().lower()
+    return accelerator in ZERO_GPU_ACCELERATORS
+
+
+def zero_gpu_startup_enabled(env: Mapping[str, str] | None = None) -> bool:
+    env = os.environ if env is None else env
+    if not running_in_huggingface_space(env):
+        return False
+    return (
+        _env_flag("SPACES_ZERO_GPU", env)
+        or bool(env.get("SPACES_ZERO_DEVICE_API_URL"))
+        or is_zero_gpu_accelerator(env.get("ACCELERATOR"))
+    )
+
+
 def resolve_runtime_profile(
     env: Mapping[str, str] | None = None,
     *,
@@ -55,12 +72,13 @@ def resolve_runtime_profile(
     env = os.environ if env is None else env
     in_huggingface_space = running_in_huggingface_space(env)
     accelerator = env.get("ACCELERATOR", "")
-    full_texture = not is_zerogpu and (
+    effective_zerogpu = is_zerogpu or zero_gpu_startup_enabled(env)
+    full_texture = not effective_zerogpu and (
         not in_huggingface_space or supports_full_texture(accelerator)
     )
 
     default_device = "cuda" if has_cuda else "cpu"
-    if in_huggingface_space and is_zerogpu:
+    if in_huggingface_space and effective_zerogpu:
         default_device = "cuda" if has_cuda else "cpu"
     elif in_huggingface_space and not full_texture:
         default_device = "cpu"
@@ -75,19 +93,21 @@ def resolve_runtime_profile(
     if "HY3D_DISABLE_TEX" in env:
         disable_tex = _env_flag("HY3D_DISABLE_TEX", env)
     else:
-        disable_tex = is_zerogpu or not full_texture or device != "cuda"
+        disable_tex = effective_zerogpu or not full_texture or device != "cuda"
 
     if "HY3D_LOW_VRAM_MODE" in env:
         low_vram_mode = _env_flag("HY3D_LOW_VRAM_MODE", env)
     else:
-        low_vram_mode = is_zerogpu or (in_huggingface_space and not full_texture)
+        low_vram_mode = effective_zerogpu or (
+            in_huggingface_space and not full_texture
+        )
 
     cache_path = env.get(
         "HY3D_CACHE_PATH",
         "/tmp/hy3d_save_dir" if in_huggingface_space else "./save_dir",
     )
 
-    if in_huggingface_space and is_zerogpu:
+    if in_huggingface_space and effective_zerogpu:
         mode = "hf-zerogpu"
     elif in_huggingface_space and device == "cuda":
         mode = "hf-gpu"
@@ -101,7 +121,7 @@ def resolve_runtime_profile(
     return RuntimeProfile(
         mode=mode,
         in_huggingface_space=in_huggingface_space,
-        is_zerogpu=is_zerogpu,
+        is_zerogpu=effective_zerogpu,
         accelerator=accelerator,
         supports_full_texture=full_texture,
         device=device,
