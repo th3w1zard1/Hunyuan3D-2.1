@@ -72,14 +72,14 @@ def _cli_flag_present(flag):
 
 HF_SPACE = _running_in_huggingface_space()
 
-if HF_SPACE and os.getenv("SPACES_ZERO_DEVICE_API_URL") and not os.getenv(
-    "SPACES_ZERO_GPU"
+if (
+    HF_SPACE
+    and os.getenv("SPACES_ZERO_DEVICE_API_URL")
+    and not os.getenv("SPACES_ZERO_GPU")
 ):
     os.environ["SPACES_ZERO_GPU"] = "true"
 
-ZERO_GPU_STARTUP_ENABLED = HF_SPACE and bool(
-    zero_gpu_startup_enabled(os.environ)
-)
+ZERO_GPU_STARTUP_ENABLED = HF_SPACE and bool(zero_gpu_startup_enabled(os.environ))
 
 if HF_SPACE:
     import spaces
@@ -1023,7 +1023,10 @@ if __name__ == "__main__":
         args.low_vram_mode = True
 
     if args.device == "cpu" and not model_path_overridden:
-        args.model_path = default_shape_model_path(args.device)
+        args.model_path = default_shape_model_path(
+            args.device,
+            is_zerogpu=RUNTIME_PROFILE.is_zerogpu,
+        )
 
     if not subfolder_overridden:
         args.subfolder = resolve_shape_subfolder(args.model_path)

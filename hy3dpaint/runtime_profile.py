@@ -74,8 +74,16 @@ def zero_gpu_startup_enabled(env: Mapping[str, str] | None = None) -> bool:
     )
 
 
-def default_shape_model_path(device: str) -> str:
-    if device == "cpu":
+def should_use_cpu_safe_shape_model(
+    device: str,
+    *,
+    is_zerogpu: bool = False,
+) -> bool:
+    return device == "cpu" and not is_zerogpu
+
+
+def default_shape_model_path(device: str, *, is_zerogpu: bool = False) -> str:
+    if should_use_cpu_safe_shape_model(device, is_zerogpu=is_zerogpu):
         return CPU_SAFE_SHAPE_MODEL_PATH
     return DEFAULT_SHAPE_MODEL_PATH
 
@@ -96,7 +104,8 @@ def resolve_shape_model_selection(
     env = os.environ if env is None else env
 
     model_path = env.get("HY3D_MODEL_PATH", "").strip() or default_shape_model_path(
-        profile.device
+        profile.device,
+        is_zerogpu=profile.is_zerogpu,
     )
     subfolder = env.get("HY3D_SHAPE_SUBFOLDER", "").strip() or resolve_shape_subfolder(
         model_path

@@ -77,6 +77,10 @@ def test_hf_zerogpu_profile_keeps_cuda_when_available_but_disables_texture():
     assert profile.disable_tex is True
     assert profile.low_vram_mode is True
     assert profile.should_enable_cpu_offload is True
+    assert resolve_shape_model_selection(profile, {}) == (
+        "tencent/Hunyuan3D-2.1",
+        "hunyuan3d-dit-v2-1",
+    )
 
 
 def test_hf_zerogpu_profile_accepts_accelerator_zero_hint_without_spaces_probe():
@@ -90,6 +94,21 @@ def test_hf_zerogpu_profile_accepts_accelerator_zero_hint_without_spaces_probe()
     assert profile.device == "cuda"
     assert profile.disable_tex is True
     assert profile.low_vram_mode is True
+
+
+def test_hf_zerogpu_profile_keeps_full_shape_model_when_startup_device_is_cpu():
+    profile = resolve_runtime_profile(
+        {"SPACE_ID": "owner/space", "ACCELERATOR": "zero"},
+        has_cuda=False,
+        is_zerogpu=True,
+    )
+
+    assert profile.mode == "hf-zerogpu"
+    assert profile.device == "cpu"
+    assert resolve_shape_model_selection(profile, {}) == (
+        "tencent/Hunyuan3D-2.1",
+        "hunyuan3d-dit-v2-1",
+    )
 
 
 def test_runtime_notice_calls_out_shape_only_zerogpu_mode():
@@ -139,7 +158,10 @@ def test_spaces_gpu_wrapper_is_reserved_for_hf_zerogpu():
 
 
 def test_zero_gpu_startup_detects_accelerator_and_platform_hints():
-    assert zero_gpu_startup_enabled({"SPACE_ID": "owner/space", "ACCELERATOR": "zero"}) is True
+    assert (
+        zero_gpu_startup_enabled({"SPACE_ID": "owner/space", "ACCELERATOR": "zero"})
+        is True
+    )
     assert (
         zero_gpu_startup_enabled(
             {
@@ -200,6 +222,7 @@ def test_explicit_shape_model_override_keeps_override_but_infers_matching_subfol
     profile = resolve_runtime_profile({}, has_cuda=True, is_zerogpu=False)
 
     assert default_shape_model_path("cpu") == "tencent/Hunyuan3D-2mini"
+    assert default_shape_model_path("cpu", is_zerogpu=True) == "tencent/Hunyuan3D-2.1"
     assert resolve_shape_model_selection(
         profile,
         {"HY3D_MODEL_PATH": "tencent/Hunyuan3D-2mini"},
