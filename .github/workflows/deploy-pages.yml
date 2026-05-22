@@ -32,7 +32,7 @@ jobs:
                   cp assets/example_images/jimeng2.png _site/assets/example_images/jimeng2.png
                   cp assets/example_images/jimeng6.png _site/assets/example_images/jimeng6.png
                   cp assets/example_images/qie.png _site/assets/example_images/qie.png
-            - uses: actions/upload-pages-artifact@v3
+            - uses: actions/upload-pages-artifact@v5
               with:
                   path: _site
 
