@@ -66,7 +66,7 @@ build = [
 test = ["pytest>=8.3,<9", "pytest-cov>=6,<7"]
 dev = [
     "build>=1.2,<2",
-    "mypy>=1.13,<2",
+    "mypy>=1.13,<3",
     "ninja>=1.11.1.1",
     "pre-commit>=4,<5",
     "pybind11>=2.13.4",
