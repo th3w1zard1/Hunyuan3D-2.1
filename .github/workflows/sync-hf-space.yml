@@ -68,7 +68,7 @@ jobs:
     outputs:
       repo_id: ${{ steps.resolve.outputs.repo_id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           lfs: true
@@ -109,7 +109,7 @@ jobs:
     if: needs.preflight.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           lfs: true
